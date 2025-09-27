@@ -213,11 +213,14 @@ public:
   RayCaster *ray_caster;
   SensorData *sensor_data_list;
   int n_sensor_data;
-
-  static constexpr std::array<const char *, 9> base_attributes = {
-      "draw_deep_ray",  "draw_deep_ray_ids", "draw_deep",
-      "draw_hip_point", "sensor_data_types", "noise_type",
-      "noise_cfg",      "geomgroup",         "detect_parentbody"};
+  int sensor_id;
+  bool compute_time_log = false;
+  std::string name;
+  std::chrono::high_resolution_clock::time_point start;
+  static constexpr std::array<const char *, 10> base_attributes = {
+      "draw_deep_ray",     "draw_deep_ray_ids", "draw_deep", "draw_hip_point",
+      "sensor_data_types", "noise_type",        "noise_cfg", "geomgroup",
+      "detect_parentbody", "compute_time"};
   std::vector<std::pair<std::string_view, int>> noise_attributes = {
       {"uniform", 3}, {"gaussian", 3}, {"noise1", 4}, {"noise2", 8}};
   /*--------通用接口--------*/

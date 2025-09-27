@@ -1,0 +1,14 @@
+<mujoco>
+  <statistic center="0 0 1" extent="2.5" />
+  <asset>
+    <texture name="plane" type="2d" builtin="checker" rgb1=".1 .1 .1" rgb2=".9 .9 .9"
+      width="512" height="512" mark="cross" markrgb=".8 .8 .8" />
+    <material name="plane" reflectance="0.3" texture="plane" texrepeat="1 1" texuniform="true" />
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true" />
+    <geom name="floor" size="0 0 0.05" type="plane" material="plane" />
+    <!-- <geom name="floor2" size="100 100 0.05" type="box" pos="0 0 -0.051" material="plane" /> -->
+  </worldbody>
+</mujoco>

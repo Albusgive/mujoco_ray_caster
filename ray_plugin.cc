@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -79,7 +80,27 @@ RayPlugin::RayPlugin() {
 void RayPlugin::Reset(const mjModel *m, int instance) {}
 
 void RayPlugin::Compute(const mjModel *m, mjData *d, int instance) {
+  if (compute_time_log) {
+    start = std::chrono::high_resolution_clock::now();
+  }
   mj_markStack(d);
+  mjtNum *sensordata = d->sensordata + m->sensor_adr[sensor_id];
+  ray_caster->compute_distance();
+  for (int i = 0; i < n_sensor_data; i++) {
+    SensorData &sensor_data = sensor_data_list[i];
+    sensor_data.func(sensordata + sensor_data.data_point);
+  }
+  mj_freeStack(d);
+  if (compute_time_log) {
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration_ms =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << name << " compute: " << duration_ms.count() / 1000.0
+              << " milliseconds" << std::endl;
+  }
+}
+
+void RayPlugin::getBaseCfg(const mjModel *m, mjData *d, int instance) {
   // Get sensor id.
   int id;
   for (id = 0; id < m->nsensor; ++id) {
@@ -88,26 +109,11 @@ void RayPlugin::Compute(const mjModel *m, mjData *d, int instance) {
       break;
     }
   }
-  mjtNum *sensordata = d->sensordata + m->sensor_adr[id];
-  ray_caster->compute_distance();
-  for (int i = 0; i < n_sensor_data; i++) {
-    SensorData &sensor_data = sensor_data_list[i];
-    sensor_data.func(sensordata + sensor_data.data_point);
+  sensor_id = id;
+  name = std::string(m->names + m->name_sensoradr[sensor_id]);
+  if (m->sensor_objtype[sensor_id] != mjOBJ_CAMERA) {
+    mju_error("%s:the sensor objtype is err,must be camera", name.c_str());
   }
-
-  // std::cout << "nplugin: " << d->nplugin << std::endl;
-  // std::cout << "npluginstate: " << m->npluginstate << std::endl;
-  // std::cout << "plugin_stateadr: " << m->plugin_stateadr[instance] <<
-  // std::endl; int state_idx = m->plugin_stateadr[instance]; for (int i =
-  // state_idx; i < state_idx + m->plugin_statenum[instance]; i++) {
-  //   std::cout << "plugin_state[" << i << "]: " << d->plugin_state[i]
-  //             << std::endl;
-  // }
-  mj_freeStack(d);
-}
-
-void RayPlugin::getBaseCfg(const mjModel *m, mjData *d, int instance) {
-
   /* ----- vis ----- */
   auto set_vis_default = [&](VisCfg::Default &vis_default, const char *attrib) {
     auto data = ReadVector<mjtNum>(mj_getPluginConfig(m, instance, attrib),
@@ -160,9 +166,13 @@ void RayPlugin::getBaseCfg(const mjModel *m, mjData *d, int instance) {
     if (!sensor_data_list[i].fromStr(sensor_data_types[i]))
       mju_error("RayPlugin: sensor_data_types error: %s",
                 sensor_data_types[i].c_str());
-    sensor_data_list[i].print();
+    // sensor_data_list[i].print();
   }
   /* ----- sensor data type  ----- */
+
+  auto compute_time =
+      ReadVector<bool>(mj_getPluginConfig(m, instance, base_attributes[9]));
+  compute_time_log = compute_time.empty() ? false : compute_time[0];
 }
 
 void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
@@ -285,6 +295,18 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       ray_caster->no_detect_body_id = m->cam_bodyid[ray_caster->cam_id];
     }
   }
+
+  /* tuning */
+  bool is_compute_hit = false;
+  bool is_compute_hit_b = false;
+  for (int i = 0; i < n_sensor_data; i++) {
+    if (sensor_data_list[i].type == DataType::pos_w)
+      is_compute_hit = true;
+    if (sensor_data_list[i].type == DataType::pos_b)
+      is_compute_hit_b = true;
+  }
+  ray_caster->is_compute_hit = is_compute_hit | vis_cfg.hip_point.is_draw;
+  ray_caster->is_compute_hit_b = is_compute_hit_b;
 }
 
 void RayPlugin::Visualize(const mjModel *m, mjData *d, const mjvOption *opt,

@@ -58,16 +58,8 @@ RayCasterCameraPlugin::RayCasterCameraPlugin(const mjModel *m, mjData *d,
       ReadVector<double>(mj_getPluginConfig(m, instance, ray_attributes[4]), 2);
   cfg.dis_range = {dis_range[0], dis_range[1]};
 
-  // Make sure sensor is attached to a site.
-  int id = 0;
-  for (int i = 0; i < m->nsensor; ++i) {
-    if (m->sensor_type[i] == mjSENS_PLUGIN && m->sensor_plugin[i] == instance) {
-      id = i;
-      break;
-    }
-  }
   std::string name =
-      std::string(mj_id2name(m, mjOBJ_CAMERA, m->sensor_objid[id]));
+      std::string(mj_id2name(m, mjOBJ_CAMERA, m->sensor_objid[sensor_id]));
   cfg.cam_name = name;
   cfg.m = m;
   cfg.d = d;

@@ -30,8 +30,8 @@ add_subdirectory(plugin/mujoco_ray_caster)
 `cmake --build . #多线程编译使用 cmake --build . -j线程数`   
 `cd bin`        
 `mkdir mujoco_plugin`   
-`cp ../lib/*.so ./mujoco_plugin/` 
-`./simulate ../../plugin/mujoco_ray_caster/ray_caster.xml`
+`cp ../lib/*.so ./mujoco_plugin/`   
+`./simulate ../../plugin/mujoco_ray_caster/model/ray_caster.xml`
 
 
 # MJCF
@@ -104,12 +104,17 @@ exapmle:
 |noise1|low high zero_probability seed|
 |noise2|low high zero_probability min_angle max_angle low_probability high_probability seed|
 
+### Other
+计算效率
+**compute_time:real(1),“0**     
+&emsp;打印计算时间
+
 
 ## RayCaster
 **resolution:real(1),“0”**     
 &emsp;分辨率
 
-**size:real(6),“0 0”**     
+**size:real(2),“0 0”**     
 &emsp;尺寸 米
 
 **type:[base,yaw,world]”**     

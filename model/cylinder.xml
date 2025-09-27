@@ -1,0 +1,25 @@
+<mujoco model="Cylinder">
+  <worldbody>
+    <body pos="1.7 -4 .3" euler="80 10 0">
+      <freejoint/>
+      <replicate count="30" euler="0 0 12">
+        <geom type="box" pos="0 -.12 0" size=".01315 .005 .1" rgba=".5 .5 0 1"/>
+      </replicate>
+    </body>
+
+    <body pos="2 -4 .4" euler="20 20 0">
+      <freejoint/>
+      <replicate count="10" euler="0 0 36">
+        <geom type="box" pos="0 -0.067 0" size=".025 .01 .1" rgba="0 .8 0 1"/>
+      </replicate>
+    </body>
+
+    <body pos="2.3 -4 .3" euler="30 30 0">
+      <freejoint/>
+      <replicate count="4" euler="0 0 90">
+        <geom type="box" pos="0.005 -0.05 0" size=".05 .005 .08" rgba="0 0 .8 1"/>
+      </replicate>
+    </body>
+
+  </worldbody>
+</mujoco>
