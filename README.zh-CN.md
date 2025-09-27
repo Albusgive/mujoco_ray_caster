@@ -143,6 +143,7 @@ exapmle:
 
 
 # GetData
+demo中提供了读取演示          
 mjData.sensordata中是所有的数据     
 mjData.plugin_state中储存了数据info
 h_ray_num,v_ray_num, list[data_point,data_size]
