@@ -35,3 +35,11 @@ target_link_options(
   ${MUJOCO_MACOS_LINK_OPTIONS}
   ${EXTRA_LINK_OPTIONS}
 )
+
+
+add_custom_command(TARGET sensor_ray POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<TARGET_FILE:sensor_ray>"
+        "${CMAKE_CURRENT_SOURCE_DIR}/"
+    COMMENT "Copying sensor_ray library to source directory..."
+)
