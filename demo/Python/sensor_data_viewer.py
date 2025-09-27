@@ -3,7 +3,7 @@ import mujoco_viewer    #pip install mujoco-python-viewer
 import cv2
 import numpy as np
 
-mujoco.mj_loadPluginLibrary('/home/albusgive2/software/mujoco-3.3.6/build/bin/mujoco_plugin/libsensor_ray.so')
+mujoco.mj_loadPluginLibrary('../../lib/libsensor_ray.so')
 
 m = mujoco.MjModel.from_xml_path(
     "../../ray_caster.xml"

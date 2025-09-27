@@ -116,7 +116,7 @@ get_ray_caster_info(const mjModel *model, mjData *d,
 // main function
 int main(int argc, const char **argv) {
   mj_loadAllPluginLibraries(
-      "/home/albusgive2/software/mujoco-3.3.6/build/bin/mujoco_plugin",
+      "../../../lib",
       +[](const char *filename, int first, int count) {
         std::printf("Plugins registered by library '%s':\n", filename);
         for (int i = first; i < first + count; ++i) {
