@@ -2,7 +2,7 @@
 #include "engine/engine_name.h"
 #include "engine/engine_util_errmem.h"
 #include "engine/engine_util_spatial.h"
-#include "plugin/sensor_ray/raycaster_src/RayCasterLidar.h"
+#include "raycaster_src/RayCasterLidar.h"
 #include "ray_plugin.h"
 #include "raycaster_src/RayCaster.h"
 #include "raycaster_src/RayCasterCamera.h"
