@@ -24,7 +24,11 @@ add_subdirectory(plugin/mujoco_ray_caster)
 `mkdir build`       
 `cd build`      
 `cmake ..`      
-`cmake --build . #多线程编译使用 cmake --build . -j线程数`      
+`cmake --build . #多线程编译使用 cmake --build . -j线程数`   
+`cd bin`        
+`mkdir mujoco_plugin`   
+`cp ../lib/*.so ./mujoco_plugin/` 
+`./simulate ../../plugin/mujoco_ray_caster/ray_caster.xml`
 
 
 # MJCF
