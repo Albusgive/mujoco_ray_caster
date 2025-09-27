@@ -1,0 +1,42 @@
+[
+{
+  "directory": "/home/albusgive2/mujoco_ray_caster/build",
+  "command": "/usr/bin/clang++ -Dsensor_ray_EXPORTS -I/home/albusgive2/mujoco_ray_caster/../.. -I/home/albusgive2/mujoco_ray_caster/../../src -isystem /usr/include/eigen3 -g -fPIC -o CMakeFiles/sensor_ray.dir/register.o -c /home/albusgive2/mujoco_ray_caster/register.cc",
+  "file": "/home/albusgive2/mujoco_ray_caster/register.cc"
+},
+{
+  "directory": "/home/albusgive2/mujoco_ray_caster/build",
+  "command": "/usr/bin/clang++ -Dsensor_ray_EXPORTS -I/home/albusgive2/mujoco_ray_caster/../.. -I/home/albusgive2/mujoco_ray_caster/../../src -isystem /usr/include/eigen3 -g -fPIC -o CMakeFiles/sensor_ray.dir/ray_plugin.o -c /home/albusgive2/mujoco_ray_caster/ray_plugin.cc",
+  "file": "/home/albusgive2/mujoco_ray_caster/ray_plugin.cc"
+},
+{
+  "directory": "/home/albusgive2/mujoco_ray_caster/build",
+  "command": "/usr/bin/clang++ -Dsensor_ray_EXPORTS -I/home/albusgive2/mujoco_ray_caster/../.. -I/home/albusgive2/mujoco_ray_caster/../../src -isystem /usr/include/eigen3 -g -fPIC -o CMakeFiles/sensor_ray.dir/ray_caster_plugin.o -c /home/albusgive2/mujoco_ray_caster/ray_caster_plugin.cc",
+  "file": "/home/albusgive2/mujoco_ray_caster/ray_caster_plugin.cc"
+},
+{
+  "directory": "/home/albusgive2/mujoco_ray_caster/build",
+  "command": "/usr/bin/clang++ -Dsensor_ray_EXPORTS -I/home/albusgive2/mujoco_ray_caster/../.. -I/home/albusgive2/mujoco_ray_caster/../../src -isystem /usr/include/eigen3 -g -fPIC -o CMakeFiles/sensor_ray.dir/ray_caster_camera_plugin.o -c /home/albusgive2/mujoco_ray_caster/ray_caster_camera_plugin.cc",
+  "file": "/home/albusgive2/mujoco_ray_caster/ray_caster_camera_plugin.cc"
+},
+{
+  "directory": "/home/albusgive2/mujoco_ray_caster/build",
+  "command": "/usr/bin/clang++ -Dsensor_ray_EXPORTS -I/home/albusgive2/mujoco_ray_caster/../.. -I/home/albusgive2/mujoco_ray_caster/../../src -isystem /usr/include/eigen3 -g -fPIC -o CMakeFiles/sensor_ray.dir/ray_caster_lidar_plugin.o -c /home/albusgive2/mujoco_ray_caster/ray_caster_lidar_plugin.cc",
+  "file": "/home/albusgive2/mujoco_ray_caster/ray_caster_lidar_plugin.cc"
+},
+{
+  "directory": "/home/albusgive2/mujoco_ray_caster/build",
+  "command": "/usr/bin/clang++ -Dsensor_ray_EXPORTS -I/home/albusgive2/mujoco_ray_caster/../.. -I/home/albusgive2/mujoco_ray_caster/../../src -isystem /usr/include/eigen3 -g -fPIC -o CMakeFiles/sensor_ray.dir/raycaster_src/RayCaster.o -c /home/albusgive2/mujoco_ray_caster/raycaster_src/RayCaster.cpp",
+  "file": "/home/albusgive2/mujoco_ray_caster/raycaster_src/RayCaster.cpp"
+},
+{
+  "directory": "/home/albusgive2/mujoco_ray_caster/build",
+  "command": "/usr/bin/clang++ -Dsensor_ray_EXPORTS -I/home/albusgive2/mujoco_ray_caster/../.. -I/home/albusgive2/mujoco_ray_caster/../../src -isystem /usr/include/eigen3 -g -fPIC -o CMakeFiles/sensor_ray.dir/raycaster_src/RayCasterCamera.o -c /home/albusgive2/mujoco_ray_caster/raycaster_src/RayCasterCamera.cpp",
+  "file": "/home/albusgive2/mujoco_ray_caster/raycaster_src/RayCasterCamera.cpp"
+},
+{
+  "directory": "/home/albusgive2/mujoco_ray_caster/build",
+  "command": "/usr/bin/clang++ -Dsensor_ray_EXPORTS -I/home/albusgive2/mujoco_ray_caster/../.. -I/home/albusgive2/mujoco_ray_caster/../../src -isystem /usr/include/eigen3 -g -fPIC -o CMakeFiles/sensor_ray.dir/raycaster_src/RayCasterLidar.o -c /home/albusgive2/mujoco_ray_caster/raycaster_src/RayCasterLidar.cpp",
+  "file": "/home/albusgive2/mujoco_ray_caster/raycaster_src/RayCasterLidar.cpp"
+}
+]
