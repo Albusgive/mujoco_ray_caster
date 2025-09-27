@@ -41,6 +41,7 @@ demo/C++/build/compile_commands.json
 demo/C++/build/Makefile
 demo/C++/build/MUJOCO_LOG.TXT
 demo/C++/build/sensor_data
+demo/C++/build/.cmake
 demo/C++/build/.cmake/api/v1/query/client-vscode/query.json
 demo/C++/build/.cmake/api/v1/reply/cache-v2-1758a37778c3ed21652f.json
 demo/C++/build/.cmake/api/v1/reply/cmakeFiles-v1-f7a154aebba13e6391bb.json
