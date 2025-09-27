@@ -2,7 +2,8 @@
 [English](README.md) | [简体中文](README.zh-CN.md)
 # Sensor RayCaster Plugins
 绑定在camear上，基于mj_ray实现的raycaster传感器
-其中raycaster_src可以直接使用C++ API，[参考](https://github.com/Albusgive/go2w_sim2sim)
+其中raycaster_src可以直接使用C++ API，[参考](https://github.com/Albusgive/go2w_sim2sim)         
+[📺视频演示](https://www.bilibili.com/video/BV1SSe1zLEVf/?spm_id_from=333.1387.homepage.video_card.click&vd_source=71e0e4952bb37bdc39eaabd9c08be754)    
 ## sensors
 mujoco.sensor.ray_caster        
 mujoco.sensor.ray_caster_camera     
