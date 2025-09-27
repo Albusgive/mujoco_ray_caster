@@ -105,9 +105,11 @@ exapmle:
 |noise2|low high zero_probability min_angle max_angle low_probability high_probability seed|
 
 ### Other
-计算效率
 **compute_time:real(1),“0**     
 &emsp;打印计算时间
+
+**n_step_update:real(1),“1**     
+&emsp;隔n_step计算一次
 
 
 ## RayCaster

@@ -2,6 +2,7 @@
   <include file="scene.xml" />
   <include file="cylinder.xml" />
   <compiler autolimits="true" />
+  <option timestep="0.002" />
 
   <extension>
     <plugin plugin="mujoco.sensor.ray_caster" />
@@ -66,7 +67,7 @@
       <config key="dis_range" value="0.01 6" />
       <config key="vertical_aperture" value="12.64" />
 
-      <!-- <config key="compute_time" value="1" /> -->
+      <config key="compute_time" value="1" />
 
       <config key="draw_deep_ray" value="1 5 1 1 1 0.5 1" />
       <config key="draw_deep_ray_ids" value="0 10 1 0 0 0.5 1 2 3 4 5 30" />
@@ -86,7 +87,7 @@
       <config key="size" value="1.0 2.0" />
       <config key="dis_range" value="0.01 6" />
 
-      <!-- <config key="compute_time" value="1" /> -->
+      <config key="compute_time" value="1" />
 
       <config key="draw_deep_ray" value="1 5 0 1 1 0.5 1" />
       <config key="draw_deep_ray_ids" value="1 10 1 0 0 0.5 1 2 3 4 5 30" />
@@ -103,13 +104,14 @@
       objname="RayCasterLidar">
       <config key="fov_h" value="150" />
       <config key="fov_v" value="50" />
-      <config key="size" value="75 30" />
+      <config key="size" value="150 50" />
       <config key="dis_range" value="0.01 6" />
 
-      <!-- <config key="compute_time" value="1" /> -->
+      <config key="n_step_update" value="10" />
+      <config key="compute_time" value="1" />
 
-      <config key="draw_deep_ray" value="1 5 0 1 1 0.5 1" />
-      <config key="draw_hip_point" value="1 0.02" />
+      <config key="draw_deep_ray" value="10 5 0 1 1 0.5 1" />
+      <config key="draw_hip_point" value="10 0.02" />
 
       <config key="sensor_data_types" value="inv_image_noise image_noise" />
       <config key="noise_type" value="uniform" />

@@ -80,6 +80,10 @@ RayPlugin::RayPlugin() {
 void RayPlugin::Reset(const mjModel *m, int instance) {}
 
 void RayPlugin::Compute(const mjModel *m, mjData *d, int instance) {
+  n_step++;
+  if (n_step < n_step_update)
+    return;
+  n_step = 0;
   if (compute_time_log) {
     start = std::chrono::high_resolution_clock::now();
   }
@@ -169,10 +173,17 @@ void RayPlugin::getBaseCfg(const mjModel *m, mjData *d, int instance) {
     // sensor_data_list[i].print();
   }
   /* ----- sensor data type  ----- */
-
+  /* ----- log  ----- */
   auto compute_time =
       ReadVector<bool>(mj_getPluginConfig(m, instance, base_attributes[9]));
   compute_time_log = compute_time.empty() ? false : compute_time[0];
+  /* ----- log  ----- */
+
+  /* ----- update step  ----- */
+  auto num_step =
+      ReadVector<int>(mj_getPluginConfig(m, instance, base_attributes[10]));
+  n_step_update = num_step.empty() ? n_step_update : num_step[0];
+  /* ----- update step  ----- */
 }
 
 void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
