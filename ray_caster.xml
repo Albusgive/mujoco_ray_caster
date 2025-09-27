@@ -69,7 +69,7 @@
 
     <plugin name="raycaster" plugin="mujoco.sensor.ray_caster" objtype="camera"
       objname="RayCaster">
-      <config key="type" value="base" />
+      <config key="type" value="yaw" />
       <config key="resolution" value="0.2" />
       <config key="size" value="1.0 2.0" />
       <config key="dis_range" value="0.01 6" />
