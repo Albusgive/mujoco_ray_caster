@@ -2,14 +2,37 @@
 [English](README.md) | [简体中文](README.zh-CN.md)
 # Sensor RayCaster Plugins
 绑定在camear上，基于mj_ray实现的raycaster传感器
-
-
-
+其中raycaster_src可以直接使用C++ API，[参考](https://github.com/Albusgive/go2w_sim2sim)
 ## sensors
-mujoco.sensor.ray_caster
-mujoco.sensor.ray_caster_camera
-mujoco.sensor.ray_caster_lidar
+mujoco.sensor.ray_caster        
+mujoco.sensor.ray_caster_camera     
+mujoco.sensor.ray_caster_lidar      
+# Build
+`git clone https://github.com/google-deepmind/mujoco.git`   
+`cd mujoco/plugin`      
+`git clone https://github.com/Albusgive/mujoco_ray_caster.git` 
+`sudo apt-get install libeigen3-dev`   
+`cd ..`     
+修改mujoco的CMakeLists.txt
+```cmake
+add_subdirectory(plugin/elasticity)
+add_subdirectory(plugin/actuator)
+add_subdirectory(plugin/sensor)
+add_subdirectory(plugin/sdf)
+# 新增路径
+add_subdirectory(plugin/mujoco_ray_caster)
+```
+`mkdir build`       
+`cd build`      
+`cmake ..`      
+`cmake --build . #多线程编译使用 cmake --build . -j线程数`   
+`cd bin`        
+`mkdir mujoco_plugin`   
+`cp ../lib/*.so ./mujoco_plugin/` 
+`./simulate ../../plugin/mujoco_ray_caster/ray_caster.xml`
 
+
+# MJCF
 ## base config
 
 ### SensorData
@@ -118,7 +141,8 @@ exapmle:
 &emsp;h_ray_num,v_ray_num
 
 
-## GetData
+# GetData
+demo中提供了读取演示          
 mjData.sensordata中是所有的数据     
 mjData.plugin_state中储存了数据info
 h_ray_num,v_ray_num, list[data_point,data_size]
