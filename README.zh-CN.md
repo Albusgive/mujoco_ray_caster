@@ -9,6 +9,7 @@ mujoco.sensor.ray_caster
 mujoco.sensor.ray_caster_camera     
 mujoco.sensor.ray_caster_lidar      
 # Build
+注意clone的mujoco版本要和将要使用的版本一致     
 `git clone https://github.com/google-deepmind/mujoco.git`   
 `cd mujoco/plugin`      
 `git clone https://github.com/Albusgive/mujoco_ray_caster.git` 
