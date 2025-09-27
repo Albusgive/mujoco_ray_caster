@@ -12,7 +12,7 @@ mujoco.sensor.ray_caster_lidar
 注意clone的mujoco版本要和将要使用的版本一致     
 `git clone https://github.com/google-deepmind/mujoco.git`   
 `cd mujoco/plugin`      
-`git clone https://github.com/Albusgive/mujoco_ray_caster.git` 
+`git clone https://github.com/Albusgive/mujoco_ray_caster.git`  
 `sudo apt-get install libeigen3-dev`   
 `cd ..`     
 修改mujoco的CMakeLists.txt
@@ -30,8 +30,8 @@ add_subdirectory(plugin/mujoco_ray_caster)
 `cmake --build . #多线程编译使用 cmake --build . -j线程数`   
 `cd bin`        
 `mkdir mujoco_plugin`   
-`cp ../lib/*.so ./mujoco_plugin/` 
-`./simulate ../../plugin/mujoco_ray_caster/ray_caster.xml`
+`cp ../lib/*.so ./mujoco_plugin/`   
+`./simulate ../../plugin/mujoco_ray_caster/model/ray_caster.xml`
 
 
 # MJCF
