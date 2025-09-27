@@ -10,7 +10,8 @@ mujoco.sensor.ray_caster_lidar
 # Build
 `git clone https://github.com/google-deepmind/mujoco.git`   
 `cd mujoco/plugin`      
-`git clone https://github.com/Albusgive/mujoco_ray_caster.git`    
+`git clone https://github.com/Albusgive/mujoco_ray_caster.git` 
+`sudo apt-get install libeigen3-dev`   
 `cd ..`     
 修改mujoco的CMakeLists.txt
 ```cmake
