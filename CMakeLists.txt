@@ -40,6 +40,6 @@ target_link_options(
 add_custom_command(TARGET sensor_ray POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "$<TARGET_FILE:sensor_ray>"
-        "${CMAKE_CURRENT_SOURCE_DIR}/lib"
+        "${CMAKE_CURRENT_SOURCE_DIR}/lib/"
     COMMENT "Copying sensor_ray library to source directory..."
 )
