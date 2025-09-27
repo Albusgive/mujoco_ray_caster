@@ -57,7 +57,7 @@
       <config key="vertical_aperture" value="12.64" />
 
       <config key="draw_deep_ray" value="1 5 0 1 1 0.5 1" />
-      <!-- <config key="draw_deep_ray_ids" value="1 10 1 0 0 0.5 1 2 3 4 5 30" /> -->
+      <config key="draw_deep_ray_ids" value="1 10 1 0 0 0.5 1 2 3 4 5 30" />
       <config key="draw_deep" value="1 5 0 1 0" />
       <config key="draw_hip_point" value="1 0.02" />
 
@@ -74,10 +74,10 @@
       <config key="size" value="1.0 2.0" />
       <config key="dis_range" value="0.01 6" />
 
-      <!-- <config key="draw_deep_ray" value="1 5 0 1 1 0.5 1" />
+      <config key="draw_deep_ray" value="1 5 0 1 1 0.5 1" />
       <config key="draw_deep_ray_ids" value="1 10 1 0 0 0.5 1 2 3 4 5 30" />
       <config key="draw_deep" value="1 5 0 1 0" />
-      <config key="draw_hip_point" value="1 0.02" /> -->
+      <config key="draw_hip_point" value="1 0.02" />
 
       <config key="sensor_data_types" value="inv_image_noise image_noise" />
       <config key="noise_type" value="uniform" />
@@ -92,8 +92,8 @@
       <config key="size" value="100 50" />
       <config key="dis_range" value="0.01 6" />
 
-      <!-- <config key="draw_deep_ray" value="1 5 0 1 1 0.5 1" />
-      <config key="draw_hip_point" value="1 0.02" /> -->
+      <config key="draw_deep_ray" value="1 5 0 1 1 0.5 1" />
+      <config key="draw_hip_point" value="1 0.02" />
 
       <config key="sensor_data_types" value="inv_image_noise image_noise" />
       <config key="noise_type" value="uniform" />
