@@ -110,7 +110,7 @@
       <config key="n_step_update" value="10" />
       <config key="compute_time" value="1" />
 
-      <config key="draw_deep_ray" value="10 5 0 1 1 0.5 1" />
+      <config key="draw_deep_ray" value="10 1 0 1 1 0.5 1" />
       <config key="draw_hip_point" value="10 0.02" />
 
       <config key="sensor_data_types" value="inv_image_noise image_noise" />

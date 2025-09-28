@@ -1,0 +1,84 @@
+<mujoco model="ray_caster_test">
+  <include file="scene.xml" />
+  <include file="cylinder.xml" />
+  <compiler autolimits="true" />
+  <option timestep="0.002" />
+
+  <extension>
+    <plugin plugin="mujoco.sensor.ray_caster" />
+    <plugin plugin="mujoco.sensor.ray_caster_camera" />
+    <plugin plugin="mujoco.sensor.ray_caster_lidar" />
+  </extension>
+  <asset>
+    <mesh file="bunny.obj" />
+  </asset>
+
+  <visual>
+    <headlight ambient=".7 .7 .7" diffuse=".2 .2 .2" specular="0.1 0.1 0.1" />
+    <map znear="0.01" />
+    <scale contactwidth=".02" contactheight=".5" />
+  </visual>
+
+  <worldbody>
+
+    <!-- <replicate count="3" offset=".5 0 0">
+      <replicate count="3" offset="0 .5 0">
+        <replicate count="2" offset="0 0 .5">
+          <body pos="2 -1 1">
+            <freejoint />
+            <geom type="box" size=".1 .1 .1" rgba=".8 .2 .1 1" solimp="0.1 0.9 0.001 0.5 2"
+              solref="-10000 -10" mass="0.01"
+              solmix="1" condim="3" />
+          </body>
+        </replicate>
+      </replicate>
+    </replicate> -->
+
+    <replicate count="5" offset=".3 0 0">
+      <replicate count="5" offset="0 .3 0">
+        <replicate count="5" offset="0 0 .3">
+          <body pos="2 -2 1">
+            <freejoint />
+            <geom type="mesh" mesh="bunny" rgba="0.8 0.2 0.1 1" solimp="0.1 0.9 0.001 0.5 2"
+              solref="-3000 -40" />
+          </body>
+        </replicate>
+      </replicate>
+    </replicate>
+
+    <body pos="0 -2 2">
+      <freejoint />
+      <geom type="sphere" size=".1" rgba=".5 .5 .5 .3" />
+      <camera name="RayCasterLidar" xyaxes="0 -1 0 0.5 0 1" />
+    </body>
+    <geom type="box" size=".05 .05 0.5" pos="0 -2 0" rgba=".5 .5 .5 1" />
+
+  </worldbody>
+
+  <sensor>
+    <framequat name="camera_quat" objtype="camera" objname="RayCasterLidar" />
+    <framepos name="camera_pos" objtype="camera" objname="RayCasterLidar" />
+
+    <plugin name="raycasterlidar" plugin="mujoco.sensor.ray_caster_lidar" objtype="camera"
+      objname="RayCasterLidar">
+      <config key="fov_h" value="120" />
+      <config key="fov_v" value="50" />
+      <config key="size" value="600 300" />
+      <config key="dis_range" value="0.01 6" />
+
+      <config key="n_step_update" value="50" />
+      <config key="compute_time" value="1" />
+
+      <config key="draw_deep_ray" value="10 1 0 1 1 0.5 1" />
+      <config key="draw_hip_point" value="10 0.02" />
+
+      <config key="sensor_data_types" value="pos_w pos_b" />
+      <config key="noise_type" value="uniform" />
+      <config key="noise_cfg" value="-0.1 0.1 1" />
+
+    </plugin>
+
+
+  </sensor>
+
+</mujoco>
