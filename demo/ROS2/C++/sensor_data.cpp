@@ -13,7 +13,7 @@ public:
   MJ_ENV(std::string model_file, std::string node_name, double max_FPS = 60)
       : rclcpp::Node(node_name) {
     load_model(model_file);
-    set_window_size(3840, 2160);
+    set_window_size(1200, 900);
     set_window_title("MUJOCO");
     set_max_FPS(max_FPS);
     sub_step = 10;
