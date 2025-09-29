@@ -1,13 +1,17 @@
 **Languages:** 
 [English](README.md) | [简体中文](README.zh-CN.md)
 # Sensor RayCaster Plugins
-绑定在camear上，基于mj_ray实现的raycaster传感器
+绑定在camear上，基于mj_ray实现的raycaster传感器,raycaster的参数尽量贴近isaaclab
 其中raycaster_src可以直接使用C++ API，[参考](https://github.com/Albusgive/go2w_sim2sim)         
 [📺视频演示](https://www.bilibili.com/video/BV1SSe1zLEVf/?spm_id_from=333.1387.homepage.video_card.click&vd_source=71e0e4952bb37bdc39eaabd9c08be754)    
+[🤖插件功能演示](https://www.bilibili.com/video/BV1wYnvzgExg/?spm_id_from=333.1387.homepage.video_card.click&vd_source=71e0e4952bb37bdc39eaabd9c08be754)
 ## sensors
-mujoco.sensor.ray_caster        
-mujoco.sensor.ray_caster_camera     
-mujoco.sensor.ray_caster_lidar      
+mujoco.sensor.ray_caster            
+![](./image/raycaster.png)
+mujoco.sensor.ray_caster_camera          
+![](./image/raycaster_camera.png) 
+mujoco.sensor.ray_caster_lidar          
+![](./image/raycaster_lidar.png)    
 # Build
 注意clone的mujoco版本要和将要使用的版本一致     
 `git clone https://github.com/google-deepmind/mujoco.git`   
@@ -103,6 +107,23 @@ exapmle:
 |gaussian|mean std seed|
 |noise1|low high zero_probability seed|
 |noise2|low high zero_probability min_angle max_angle low_probability high_probability seed|
+
+#### noise1
+在均值噪声基础上增加随机置0
+
+#### noise2
+noise2是根据近似的射线入射角度进行判断的噪声，在noise1的基础上从最小入射角到最到入射角[90,180]数据为0的概率是[low_probability,high_probability]
+<center class="half">
+<img src="./image/noise2_1.png" width=200/>
+<img src="./image/noise2_2.png" width=200/>
+<img src="./image/noise2_3.png" width=200/>
+<img src="./image/noise2_4.png" width=200/>
+<img src="./image/noise2_5.png" width=200/>
+<img src="./image/noise2_6.png" width=200/>
+<img src="./image/noise2_7.png" width=200/>
+<img src="./image/noise2_8.png" width=200/>
+</center>
+
 
 ### Other
 **compute_time:real(1),“0**     
@@ -205,3 +226,6 @@ def get_ray_caster_info(model: mujoco.MjModel, data: mujoco.MjData, sensor_name:
     )
     return h_ray_num, v_ray_num, data_ps
 ```
+
+# 技术交流
+![](./image/qq.jpg)
