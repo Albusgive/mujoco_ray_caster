@@ -35,7 +35,10 @@ add_subdirectory(plugin/mujoco_ray_caster)
 `cd bin`        
 `mkdir mujoco_plugin`   
 `cp ../lib/*.so ./mujoco_plugin/`   
-`./simulate ../../plugin/mujoco_ray_caster/model/ray_caster.xml`
+test1:      
+`./simulate ../../plugin/mujoco_ray_caster/model/ray_caster.xml`        
+test2:      
+`./simulate ../../plugin/mujoco_ray_caster/model/ray_caster2.xml`
 
 
 # MJCF
@@ -114,14 +117,14 @@ exapmle:
 #### noise2
 noise2是根据近似的射线入射角度进行判断的噪声，在noise1的基础上从最小入射角到最到入射角[90,180]数据为0的概率是[low_probability,high_probability]
 <div align="center">
-<img src="./image/noise2_1.png" width=220/>
-<img src="./image/noise2_2.png" width=220/>
-<img src="./image/noise2_3.png" width=220/>
-<img src="./image/noise2_4.png" width=220/>
-<img src="./image/noise2_5.png" width=220/>
-<img src="./image/noise2_6.png" width=220/>
-<img src="./image/noise2_7.png" width=220/>
-<img src="./image/noise2_8.png" width=220/>
+<img src="./image/noise2_1.png" width=200/>
+<img src="./image/noise2_2.png" width=200/>
+<img src="./image/noise2_3.png" width=200/>
+<img src="./image/noise2_4.png" width=200/>
+<img src="./image/noise2_5.png" width=200/>
+<img src="./image/noise2_6.png" width=200/>
+<img src="./image/noise2_7.png" width=200/>
+<img src="./image/noise2_8.png" width=200/>
 </div>
 
 
