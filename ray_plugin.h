@@ -219,11 +219,11 @@ public:
   int n_step = 0;
   std::string name;
   std::chrono::high_resolution_clock::time_point start;
-  static constexpr std::array<const char *, 11> base_attributes = {
+  static constexpr std::array<const char *, 12> base_attributes = {
       "draw_deep_ray",  "draw_deep_ray_ids", "draw_deep",
       "draw_hip_point", "sensor_data_types", "noise_type",
       "noise_cfg",      "geomgroup",         "detect_parentbody",
-      "compute_time",   "n_step_update"};
+      "compute_time_log",   "n_step_update",     "num_thread"};
   std::vector<std::pair<std::string_view, int>> noise_attributes = {
       {"uniform", 3}, {"gaussian", 3}, {"noise1", 4}, {"noise2", 8}};
   /*--------通用接口--------*/

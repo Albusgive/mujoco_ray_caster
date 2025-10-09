@@ -318,6 +318,13 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
   }
   ray_caster->is_compute_hit = is_compute_hit | vis_cfg.hip_point.is_draw;
   ray_caster->is_compute_hit_b = is_compute_hit_b;
+
+  /* thread */
+  auto num_thread =
+      ReadVector<int>(mj_getPluginConfig(m, instance, base_attributes[11]));
+  if (!num_thread.empty()) {
+    ray_caster->set_num_thread(num_thread[0]);
+  }
 }
 
 void RayPlugin::Visualize(const mjModel *m, mjData *d, const mjvOption *opt,

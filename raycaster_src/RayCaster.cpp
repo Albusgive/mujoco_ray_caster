@@ -1,4 +1,6 @@
 #include "RayCaster.h"
+#include "engine/engine_util_blas.h"
+#include "mujoco/mjthread.h"
 #include <algorithm>
 #include <cmath>
 #include <iterator>
@@ -33,11 +35,12 @@ void RayCaster::init(const mjModel *m, mjData *d, std::string cam_name,
 }
 
 RayCaster::~RayCaster() {
-  // delete[] _ray_vec;
-  // delete[] ray_vec;
-  // delete[] geomids;
-  // delete[] dist;
-  // delete[] dist_ratio;
+  delete[] _ray_vec;
+  delete[] ray_vec;
+  delete[] geomids;
+  delete[] dist;
+  delete[] dist_ratio;
+  mju_threadPoolDestroy(pool);
 }
 
 void RayCaster::_init(const mjModel *m, mjData *d, std::string cam_name,
@@ -84,6 +87,24 @@ void RayCaster::_init(const mjModel *m, mjData *d, std::string cam_name,
 
   _noise = new ray_noise::Noise;
   create_rays();
+}
+
+void RayCaster::set_num_thread(int n) {
+  if (n == 0)
+    return;
+  if (pool != nullptr)
+    mju_threadPoolDestroy(pool);
+  num_thread = n;
+  ray_task_datas.resize(num_thread);
+  pool = mju_threadPoolCreate(num_thread);
+  for (int i = 1; i < (num_thread + 1); i++) {
+    int idx = (i + 1) * nray / (num_thread + 1);
+    RayTaskData rd;
+    rd.instance = this;
+    rd.start = i * nray / (num_thread + 1);
+    rd.end = idx;
+    ray_task_datas[i - 1] = rd;
+  }
 }
 
 int RayCaster::get_idx(int v, int h) {
@@ -196,52 +217,58 @@ void RayCaster::create_rays() {
   }
 }
 
-void RayCaster::compute_distance() {
-  compute_ray_vec();
-  if (is_offert) {
-    int geomid[1];
-    for (int i = 0; i < nray; i++) {
-      mjtNum pnt[3] = {pos[0], pos[1], pos[2]};
+void RayCaster::compute_ray(int start, int end) {
+  int geomid[1];
+  for (int i = start; i < end; i++) {
+    mjtNum pnt[3] = {pos[0], pos[1], pos[2]};
+    if (is_offert) {
       pnt[0] += ray_vec_offset[i * 3];
       pnt[1] += ray_vec_offset[i * 3 + 1];
       pnt[2] += ray_vec_offset[i * 3 + 2];
-      dist_ratio[i] = mj_ray(m, d, pnt, ray_vec + i * 3, geomgroup, 1,
-                             no_detect_body_id, geomid);
-      if (geomid[0] == -1) {
-        dist_ratio[i] = 1;
-      } else if (dist_ratio[i] > 1) {
-        dist_ratio[i] = 1;
-      } else if (dist_ratio[i] < deep_min_ratio) {
-        dist_ratio[i] = deep_min_ratio;
-      }
-      dist[i] = deep_max * dist_ratio[i];
-      _noise->produce_noise(dist[i]);
-      if (dist[i] > deep_max) {
-        dist[i] = deep_max;
-      } else if (dist[i] < deep_min) {
-        dist[i] = deep_min;
-      }
     }
-  } else {
-    mj_multiRay(m, d, pos, ray_vec, geomgroup, 1, no_detect_body_id, geomids,
-                dist_ratio, nray, deep_max);
-    for (int i = 0; i < nray; i++) {
-      if (geomids[i] == -1) {
-        dist_ratio[i] = 1;
-      } else if (dist_ratio[i] > 1) {
-        dist_ratio[i] = 1;
-      } else if (dist_ratio[i] < deep_min_ratio) {
-        dist_ratio[i] = deep_min_ratio;
-      }
-      dist[i] = deep_max * dist_ratio[i];
-      _noise->produce_noise(dist[i]);
-      if (dist[i] > deep_max) {
-        dist[i] = deep_max;
-      } else if (dist[i] < deep_min) {
-        dist[i] = deep_min;
-      }
+    dist_ratio[i] = mj_ray(m, d, pnt, ray_vec + i * 3, geomgroup, 1,
+                           no_detect_body_id, geomid);
+    geomids[i] = geomid[0];
+    if (geomid[0] == -1) {
+      dist_ratio[i] = 1;
+    } else if (dist_ratio[i] > 1) {
+      dist_ratio[i] = 1;
+    } else if (dist_ratio[i] < deep_min_ratio) {
+      dist_ratio[i] = deep_min_ratio;
+    }
+    dist[i] = deep_max * dist_ratio[i];
+    _noise->produce_noise(dist[i]);
+    if (dist[i] > deep_max) {
+      dist[i] = deep_max;
+    } else if (dist[i] < deep_min) {
+      dist[i] = deep_min;
     }
   }
+}
+
+void RayCaster::compute_distance() {
+
+  compute_ray_vec();
+
+  if (num_thread > 0) {
+    std::vector<mjTask> tasks(num_thread);
+    for (int i = 0; i < num_thread; i++) {
+      mju_defaultTask(&tasks[i]);
+      tasks[i].func = ray_task_func;
+      tasks[i].args = &ray_task_datas[i];
+      mju_threadPoolEnqueue(pool, &tasks[i]);
+    }
+    // 主线程处理首段
+    int first_start = ray_task_datas[0].start;
+    compute_ray(0, first_start);
+    // 等待所有任务完成
+    for (int i = 0; i < num_thread; i++) {
+      mju_taskJoin(&tasks[i]); // 阻塞直到完成
+    }
+  } else {
+    compute_ray(0, nray);
+  }
+
   if (is_compute_hit)
     compute_hit();
   if (is_compute_hit_b)
@@ -426,19 +453,20 @@ void RayCaster::compute_hit() {
   for (int i = 0; i < v_ray_num; i++) {
     for (int j = 0; j < h_ray_num; j++) {
       int idx = _get_idx(i, j);
+      int data_pos = idx * 3;
       if (geomids[idx] == -1 || dist[idx] == 0 || dist_ratio[idx] > LIMIT_MAX) {
-        pos_w[idx * 3] = pos_w[idx * 3 + 1] = pos_w[idx * 3 + 2] = NAN;
+        pos_w[data_pos] = pos_w[data_pos + 1] = pos_w[data_pos + 2] = NAN;
         continue;
       }
-      pos_w[idx * 3] = pos[0];
-      pos_w[idx * 3 + 1] = pos[1];
-      pos_w[idx * 3 + 2] = pos[2];
+      pos_w[data_pos] = pos[0];
+      pos_w[data_pos + 1] = pos[1];
+      pos_w[data_pos + 2] = pos[2];
       if (is_offert) {
-        pos_w[idx * 3] += ray_vec_offset[idx * 3];
-        pos_w[idx * 3 + 1] += ray_vec_offset[idx * 3 + 1];
-        pos_w[idx * 3 + 2] += ray_vec_offset[idx * 3 + 2];
+        pos_w[data_pos] += ray_vec_offset[data_pos];
+        pos_w[data_pos + 1] += ray_vec_offset[data_pos + 1];
+        pos_w[data_pos + 2] += ray_vec_offset[data_pos + 2];
       }
-      mju_addToScl3(pos_w + (idx * 3), ray_vec + (idx * 3), dist_ratio[idx]);
+      mju_addToScl3(pos_w + (data_pos), ray_vec + (data_pos), dist_ratio[idx]);
     }
   }
 }
@@ -447,19 +475,20 @@ void RayCaster::compute_hit_b() {
   for (int i = 0; i < v_ray_num; i++) {
     for (int j = 0; j < h_ray_num; j++) {
       int idx = _get_idx(i, j);
+      int data_pos = idx * 3;
       if (geomids[idx] == -1 || dist[idx] == 0 || dist_ratio[idx] > LIMIT_MAX) {
-        pos_b[idx * 3] = pos_b[idx * 3 + 1] = pos_b[idx * 3 + 2] = NAN;
+        pos_b[data_pos] = pos_b[data_pos + 1] = pos_b[data_pos + 2] = NAN;
         continue;
       }
-      pos_b[idx * 3] = 0.0;
-      pos_b[idx * 3 + 1] = 0.0;
-      pos_b[idx * 3 + 2] = 0.0;
+      pos_b[data_pos] = 0.0;
+      pos_b[data_pos + 1] = 0.0;
+      pos_b[data_pos + 2] = 0.0;
       if (is_offert) {
-        pos_b[idx * 3] += _ray_vec_offset[idx * 3];
-        pos_b[idx * 3 + 1] += _ray_vec_offset[idx * 3 + 1];
-        pos_b[idx * 3 + 2] += _ray_vec_offset[idx * 3 + 2];
+        pos_b[data_pos] += _ray_vec_offset[data_pos];
+        pos_b[data_pos + 1] += _ray_vec_offset[data_pos + 1];
+        pos_b[data_pos + 2] += _ray_vec_offset[data_pos + 2];
       }
-      mju_addToScl3(pos_b + (idx * 3), _ray_vec + (idx * 3), dist_ratio[idx]);
+      mju_addToScl3(pos_b + (data_pos), _ray_vec + (data_pos), dist_ratio[idx]);
     }
   }
 }

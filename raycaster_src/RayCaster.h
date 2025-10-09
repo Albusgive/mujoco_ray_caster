@@ -1,7 +1,8 @@
 #pragma once
-#include "RayNoise.hpp"
-#include "mujoco/mjtnum.h"
 #include "Noise.hpp"
+#include "RayNoise.hpp"
+#include "mujoco/mjthread.h"
+#include "mujoco/mjtnum.h"
 #include <array>
 #include <cmath>
 #include <iostream>
@@ -50,6 +51,11 @@ public:
   void _init(const mjModel *m, mjData *d, std::string cam_name, int h_ray_num,
              int v_ray_num, const std::array<mjtNum, 2> &dis_range,
              bool is_detect_parentbody);
+
+  /** @brief 设置线程数量
+   * @param n 线程数量
+   */
+  void set_num_thread(int n);
 
   /** @brief 计算距离 数值存放在dist中*/
   void compute_distance();
@@ -129,16 +135,17 @@ public:
   mjtNum deep_min_ratio;
   mjtNum deep_min_ratio_dif;
   mjtNum deep_min_dif;
-  mjtNum *_ray_vec;        // h_ray_num * v_ray_num * 3 相对于相机坐标系的偏转
+  mjtNum *_ray_vec; // h_ray_num * v_ray_num * 3 相对于相机坐标系的偏转
   mjtNum *_ray_vec_offset; // h_ray_num * v_ray_num * 3 相对于相机坐标系的位移
-  mjtNum *ray_vec;         // h_ray_num * v_ray_num * 3 世界坐标系下的偏转
-  mjtNum *ray_vec_offset;  // h_ray_num * v_ray_num * 3 世界坐标系下的位移
-  int *geomids;            // 命中的geomid
+  mjtNum *ray_vec; // h_ray_num * v_ray_num * 3 世界坐标系下的偏转
+  mjtNum *ray_vec_offset; // h_ray_num * v_ray_num * 3 世界坐标系下的位移
+  int *geomids;           // 命中的geomid
   mjtNum *dist_ratio;
   mjtByte geomgroup[8] = {true,  true,  false,
                           false, false, false}; // 检测哪些类型的geom
   bool is_offert = true;
   RayCasterType type = RayCasterType::none;
+  int num_thread = 0;
 
   int _get_idx(int h, int v);
   // 将ray从相机坐标系转换到世界坐标系
@@ -181,6 +188,22 @@ public:
   void compute_hit_b();
 
 private:
+  mjThreadPool *pool = nullptr;
+  struct RayTaskData {
+    RayCaster *instance; // 指向你的类实例
+    int start;
+    int end;
+  };
+  std::vector<RayTaskData> ray_task_datas;
+  static void *ray_task_func(void *user_data) {
+    RayTaskData *data = static_cast<RayTaskData *>(user_data);
+    // 调用成员函数
+    data->instance->compute_ray(data->start, data->end);
+    return nullptr;
+  }
+
+  void compute_ray(int start, int end);
+
   void draw_ary(int idx, int width, float *color, mjvScene *scn, bool is_scale);
 
   mjtNum resolution;

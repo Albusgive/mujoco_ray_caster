@@ -1,0 +1,62 @@
+<mujoco model="stair1">
+<!--  <statistic center="1.0 0.7 1.0" extent="0.8"/>-->
+
+  <worldbody>
+    <geom pos="2.0 0.0 0" type="box"  size="0.15 3 0.08"/>
+    <geom pos="2.3 0.0 0" type="box"  size="0.15 3 0.16"/>
+    <geom pos="2.6 0.0 0" type="box"  size="0.15 3 0.24"/>
+    <geom pos="2.9 0.0 0" type="box"  size="0.15 3 0.32"/>
+    <geom pos="3.2 0.0 0" type="box"  size="0.15 3 0.40"/>
+    <geom pos="4.0 0.0 0" type="box"  size="0.65 3 0.48"/>
+    <geom pos="4.8 0.0 0" type="box"  size="0.15 3 0.40"/>
+    <geom pos="5.1 0.0 0" type="box"  size="0.15 3 0.32"/>
+    <geom pos="5.4 0.0 0" type="box"  size="0.15 3 0.24"/>
+    <geom pos="5.7 0.0 0" type="box"  size="0.15 3 0.16"/>
+    <geom pos="6.0 0.0 0" type="box"  size="0.15 3 0.08"/>
+
+    <geom pos="8.0 0.0 0" type="box"  size="0.15 3 0.1"/>
+    <geom pos="8.3 0.0 0" type="box"  size="0.15 3 0.2"/>
+    <geom pos="8.6 0.0 0" type="box"  size="0.15 3 0.3"/>
+    <geom pos="8.9 0.0 0" type="box"  size="0.15 3 0.4"/>
+    <geom pos="9.2 0.0 0" type="box"  size="0.15 3 0.5"/>
+    <geom pos="10.0 0.0 0" type="box"  size="0.65 3 0.6"/>
+    <geom pos="10.8 0.0 0" type="box"  size="0.15 3 0.5"/>
+    <geom pos="11.1 0.0 0" type="box"  size="0.15 3 0.4"/>
+    <geom pos="11.4 0.0 0" type="box"  size="0.15 3 0.3"/>
+    <geom pos="11.7 0.0 0" type="box"  size="0.15 3 0.2"/>
+    <geom pos="12.0 0.0 0" type="box"  size="0.15 3 0.1"/>
+
+    <geom pos="-2.0 0.0 0" type="box"  size="0.15 3 0.12"/>
+    <geom pos="-2.3 0.0 0" type="box"  size="0.15 3 0.24"/>
+    <geom pos="-2.6 0.0 0" type="box"  size="0.15 3 0.36"/>
+    <geom pos="-2.9 0.0 0" type="box"  size="0.15 3 0.48"/>
+    <geom pos="-3.2 0.0 0" type="box"  size="0.15 3 0.60"/>
+    <geom pos="-4.0 0.0 0" type="box"  size="0.65 3 0.72"/>
+    <geom pos="-4.8 0.0 0" type="box"  size="0.15 3 0.60"/>
+    <geom pos="-5.1 0.0 0" type="box"  size="0.15 3 0.48"/>
+    <geom pos="-5.4 0.0 0" type="box"  size="0.15 3 0.36"/>
+    <geom pos="-5.7 0.0 0" type="box"  size="0.15 3 0.24"/>
+    <geom pos="-6.0 0.0 0" type="box"  size="0.15 3 0.12"/>
+
+    <geom pos="-8.0 0.0 0" type="box"  size="0.15 3 0.15"/>
+    <geom pos="-8.3 0.0 0" type="box"  size="0.15 3 0.30"/>
+    <geom pos="-8.6 0.0 0" type="box"  size="0.15 3 0.45"/>
+    <geom pos="-8.9 0.0 0" type="box"  size="0.15 3 0.60"/>
+    <geom pos="-9.2 0.0 0" type="box"  size="0.15 3 0.75"/>
+    <geom pos="-10.0 0.0 0" type="box"  size="0.65 3 0.90"/>
+    <geom pos="-10.8 0.0 0" type="box"  size="0.15 3 0.75"/>
+    <geom pos="-11.1 0.0 0" type="box"  size="0.15 3 0.60"/>
+    <geom pos="-11.4 0.0 0" type="box"  size="0.15 3 0.45"/>
+    <geom pos="-11.7 0.0 0" type="box"  size="0.15 3 0.30"/>
+    <geom pos="-12.0 0.0 0" type="box"  size="0.15 3 0.15"/>
+
+    <geom pos="0.0 4.0 0.00" type="box"  size="2.00 2 0.1" euler="0.3 0 0"/>
+    <geom pos="0.0 6.3 0.59" type="box"  size="2.00 0.42 0.1" euler=" 0.0 0 0"/>
+    <geom pos="0.0 8.6 0.00" type="box"  size="2.00 2 0.1" euler="-0.3 0 0"/>
+
+    <geom pos="0.0 12.0 0.00" type="box"  size="2.00 2 0.1" euler="0.4 0 0"/>
+    <geom pos="0.0 14.3 0.77" type="box"  size="2.00 0.5 0.1" euler=" 0.0 0 0"/>
+    <geom pos="0.0 16.6 0.00" type="box"  size="2.00 2 0.1" euler="-0.4 0 0"/>
+
+  </worldbody>
+</mujoco>
