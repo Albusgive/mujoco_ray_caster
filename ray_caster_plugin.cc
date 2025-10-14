@@ -36,16 +36,31 @@ RayCasterPlugin::RayCasterPlugin(const mjModel *m, mjData *d, int instance) {
   getBaseCfg(m, d, instance);
 
   auto resolution =
-      ReadVector<double>(mj_getPluginConfig(m, instance, ray_attributes[0]), 1);
-  cfg.resolution = resolution[0];
+      ReadVector<double>(mj_getPluginConfig(m, instance, ray_attributes[0]));
+  if (resolution.size() == 1)
+    cfg.resolution = resolution[0];
+  else if (resolution.empty())
+    cfg.resolution = 0.1;
+  else
+    mju_error("RayCasterPlugin: resolution must be 1");
 
   auto size =
-      ReadVector<double>(mj_getPluginConfig(m, instance, ray_attributes[1]), 2);
-  cfg.size = {size[0], size[1]};
+      ReadVector<double>(mj_getPluginConfig(m, instance, ray_attributes[1]));
+  if (size.size() == 2)
+    cfg.size = {size[0], size[1]};
+  else if (size.empty())
+    cfg.size = {1.0, 1.0};
+  else
+    mju_error("RayCasterPlugin: size must be 2");
 
   auto dis_range =
-      ReadVector<double>(mj_getPluginConfig(m, instance, ray_attributes[2]), 2);
-  cfg.dis_range = {dis_range[0], dis_range[1]};
+      ReadVector<double>(mj_getPluginConfig(m, instance, ray_attributes[2]));
+  if (dis_range.size() == 2)
+    cfg.dis_range = {dis_range[0], dis_range[1]};
+  else if (dis_range.empty())
+    cfg.dis_range = {0.001, 1e6};
+  else
+    mju_error("RayCasterPlugin: dis_range must be 2");
 
   std::string type = mj_getPluginConfig(m, instance, ray_attributes[3]);
   if (type == "base") {
@@ -64,7 +79,7 @@ RayCasterPlugin::RayCasterPlugin(const mjModel *m, mjData *d, int instance) {
   cfg.m = m;
   cfg.d = d;
   ray_caster = new RayCaster(cfg);
-  initSensor(m,d, instance, ray_caster->nray);
+  initSensor(m, d, instance, ray_caster->nray);
 }
 
 void RayCasterPlugin::RegisterPlugin() {
