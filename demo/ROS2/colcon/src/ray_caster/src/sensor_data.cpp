@@ -1,12 +1,10 @@
-#include "mujoco_thread.h"
 #include "tf2/transform_datatypes.hpp"
 #include <geometry_msgs/msg/transform_stamped.hpp>
-#include <mujoco/mjtnum.h>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <string>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include "mujoco_thread.h"
 
 class MJ_ENV : public mujoco_thread, public rclcpp::Node {
 public:
@@ -171,17 +169,20 @@ public:
   }
 };
 
-int main(int argc, char * argv[]) {
+int main(int argc, const char **argv) {
+  std::string lib_path = MJ_PLUGIN_PATH;
+  lib_path += "/lib";
   mj_loadAllPluginLibraries(
-      "../../../../lib", +[](const char *filename, int first, int count) {
+      lib_path.c_str(), +[](const char *filename, int first, int count) {
         std::printf("Plugins registered by library '%s':\n", filename);
         for (int i = first; i < first + count; ++i) {
           std::printf("    %s\n", mjp_getPluginAtSlot(i)->name);
         }
       });
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<MJ_ENV>("../../../../model/ray_caster2.xml",
-                                       "mujoco_ray_caster", 60);
+  std::string model_path =
+      std::string(MJ_PLUGIN_PATH) + "/model/ray_caster2.xml";
+  auto node = std::make_shared<MJ_ENV>(model_path, "mujoco_ray_caster", 60);
   node->connect_windows_sim();
   node->render();
   node->sim2thread();

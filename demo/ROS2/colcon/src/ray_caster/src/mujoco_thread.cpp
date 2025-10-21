@@ -1,4 +1,14 @@
 #include "mujoco_thread.h"
+#include <chrono>
+#include <cstddef>
+#include <functional>
+#include <iomanip>
+#include <mujoco/mjmodel.h>
+#include <mujoco/mjrender.h>
+#include <mujoco/mujoco.h>
+#include <mutex>
+#include <utility>
+#include <vector>
 mujoco_thread::mujoco_thread(std::string model_file, double max_FPS, int width,
                              int height, std::string title)
     : max_FPS(max_FPS), width(width), height(height), title(title) {
@@ -15,30 +25,10 @@ mujoco_thread::~mujoco_thread() {
   glfwTerminate(); // 终止 GLFW
 }
 
-void mujoco_thread::load_model(std::string model_file) {
-  char error[1000] = "Could not load binary model";
-  if (model_file.size() > 4 &&
-      model_file.compare(model_file.size() - 4, 4, ".mjb") == 0) {
-    m = mj_loadModel(model_file.c_str(), 0);
-  } else {
-    m = mj_loadXML(model_file.c_str(), 0, error, 1000);
-  }
-  if (!m) {
-    mju_error("Load model error: %s", error);
-  }
-  // make data
-  d = mj_makeData(m);
-  realtime.store(m->vis.global.realtime);
+void mujoco_thread::load_model(mjModel *m) {
+  this->m = new mjModel(*m);
+  d = mj_makeData(this->m);
   mj_forward(m, d);
-
-  cam_type.push_back(mjCAMERA_FREE);
-  for (int i = 1; i < m->ncam; i++) {
-    if (m->cam_mode[i] == mjCAMLIGHT_FIXED) {
-      cam_type.push_back(mjCAMERA_FIXED);
-    } else {
-      cam_type.push_back(mjCAMERA_TRACKING);
-    }
-  }
 }
 
 void mujoco_thread::set_window_size(int width, int height) {
@@ -67,6 +57,33 @@ void mujoco_thread::reset() {
 
 void mujoco_thread::connect_windows_sim() { connect_windows.store(true); }
 
+void mujoco_thread::load_model(std::string model_file) {
+  char error[1000] = "Could not load binary model";
+  if (model_file.size() > 4 &&
+      model_file.compare(model_file.size() - 4, 4, ".mjb") == 0) {
+    m = mj_loadModel(model_file.c_str(), 0);
+  } else {
+    m = mj_loadXML(model_file.c_str(), 0, error, 1000);
+  }
+  if (!m) {
+    mju_error("Load model error: %s", error);
+  }
+  // make data
+  d = mj_makeData(m);
+  mj_resetDataKeyframe(m, d, 0);
+  realtime.store(m->vis.global.realtime);
+  mj_forward(m, d);
+
+  cam_type.push_back(mjCAMERA_FREE);
+  for (int i = 1; i < m->ncam; i++) {
+    if (m->cam_mode[i] == mjCAMLIGHT_FIXED) {
+      cam_type.push_back(mjCAMERA_FIXED);
+    } else {
+      cam_type.push_back(mjCAMERA_TRACKING);
+    }
+  }
+}
+
 void mujoco_thread::sim() {
   // step
   while (is_sim.load()) {
@@ -74,37 +91,24 @@ void mujoco_thread::sim() {
     if (is_step.load()) {
       std::unique_lock<std::mutex> lk(m_mtx);
       step();
-      if (step_or_forward) {
-        for (int i = 0; i < sub_step; i++) {
-          mj_step(m, d);
-          track();
-        }
-      } else {
-        mj_forward(m, d);
+      for (int i = 0; i < sub_step; i++) {
+        mj_step(m, d);
+        // 记录轨迹
         track();
       }
       lk.unlock();
       step_unlock();
-
-    } else {
-      mj_forward(m, d);
     }
-    if (is_step.load() && step_or_forward) {
-      // 同步时间
-      auto current_time = std::chrono::high_resolution_clock::now();
-      double elapsed_sec =
-          std::chrono::duration<double>(current_time - step_start).count();
-      double time_until_next_step = m->opt.timestep * sub_step - elapsed_sec;
-      if (time_until_next_step > 0.0) {
-        auto sleep_duration =
-            std::chrono::duration<double>(time_until_next_step);
-        std::this_thread::sleep_for(sleep_duration / realtime.load());
-      }
-    } else {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    // 同步时间
+    auto current_time = std::chrono::high_resolution_clock::now();
+    double elapsed_sec =
+        std::chrono::duration<double>(current_time - step_start).count();
+    double time_until_next_step = m->opt.timestep * sub_step - elapsed_sec;
+    if (time_until_next_step > 0.0) {
+      auto sleep_duration = std::chrono::duration<double>(time_until_next_step);
+      std::this_thread::sleep_for(sleep_duration / realtime.load());
     }
   }
-  simend();
 }
 
 void mujoco_thread::sim2thread() {
@@ -112,24 +116,8 @@ void mujoco_thread::sim2thread() {
   sim_thread.detach();
 }
 
-void mujoco_thread::step() {}
-void mujoco_thread::simend() {}
 void mujoco_thread::step_unlock() {}
-void mujoco_thread::vis_cfg() {
-  /*--------可视化配置--------*/
-  // opt.flags[mjtVisFlag::mjVIS_CONTACTPOINT] = true;
-  // opt.flags[mjtVisFlag::mjVIS_CAMERA] = true;
-  // opt.flags[mjtVisFlag::mjVIS_CONVEXHULL] = true;
-  // opt.flags[mjtVisFlag::mjVIS_COM] = true;
-  // opt.label = mjtLabel::mjLABEL_BODY;
-  // opt.frame = mjtFrame::mjFRAME_BODY;
-  /*--------可视化配置--------*/
-
-  /*--------场景渲染--------*/
-  // scn.flags[mjtRndFlag::mjRND_WIREFRAME] = true;
-  // scn.flags[mjtRndFlag::mjRND_SEGMENT] = true;
-  // scn.flags[mjtRndFlag::mjRND_IDCOLOR] = true;
-}
+void mujoco_thread::vis_cfg() {}
 void mujoco_thread::draw() {}
 void mujoco_thread::draw_windows() {}
 
@@ -357,10 +345,6 @@ void mujoco_thread::keyboard(int key, int scancode, int act, int mods) {
       cam.type = cam_type[cam_id];
       cam.trackbodyid = m->cam_targetbodyid[cam_id];
     } break;
-    case GLFW_KEY_W: {
-      scn.flags[mjtRndFlag::mjRND_WIREFRAME] =
-          ~scn.flags[mjtRndFlag::mjRND_WIREFRAME];
-    } break;
     }
     auto _realtime = realtime.load();
     if (_realtime > 1.0) {
@@ -511,7 +495,6 @@ void mujoco_thread::updateRender() {
       }
 
       mjv_updateScene(m, d, &opt, &pert, &cam, mjCAT_ALL, &scn);
-
       draw();
 
       // 轨迹跟踪
@@ -604,38 +587,12 @@ mujoco_thread::get_sensor_data(const std::string &sensor_name) {
   return sensor_data;
 }
 
-void mujoco_thread::get_sensor_data(const std::string &sensor_name,
-                                    int &data_pos, int &dim) {
-  int sensor_id = mj_name2id(m, mjOBJ_SENSOR, sensor_name.c_str());
-  if (sensor_id == -1) {
-    std::cout << "no found sensor" << std::endl;
-    return;
-  }
-  data_pos = 0;
-  for (int i = 0; i < sensor_id; i++) {
-    data_pos += m->sensor_dim[i];
-  }
-  dim = m->sensor_dim[sensor_id];
-}
-
 void mujoco_thread::draw_line(mjvScene *scn, mjtNum *from, mjtNum *to,
                               float rgba[4]) {
   scn->ngeom += 1;
   mjvGeom *geom = scn->geoms + scn->ngeom - 1;
   mjv_initGeom(geom, mjGEOM_SPHERE, nullptr, nullptr, nullptr, rgba);
-  mjv_connector(geom, mjGEOM_LINE, 0.03, from, to);
-}
-
-void mujoco_thread::draw_arrow(mjvScene *scn, mjtNum *from, mjtNum *to,
-                               mjtNum width, float rgba[4]) {
-  scn->ngeom += 1;
-  mjvGeom *geom = scn->geoms + scn->ngeom - 1;
-  mjtNum vec[3];
-  mjtNum end[3];
-  mju_sub3(vec, to, from);
-  mju_addScl3(end, from, vec, 2);
-  mjv_initGeom(geom, mjGEOM_SPHERE, NULL, NULL, NULL, rgba);
-  mjv_connector(geom, mjGEOM_ARROW, width, from, end);
+  mjv_connector(geom, mjGEOM_ARROW, 0.03, from, to);
 }
 
 void mujoco_thread::draw_geom(mjvScene *scn, int type, mjtNum *size,
@@ -818,108 +775,6 @@ void mujoco_thread::track() {
     bodys_tracks[j].push_back({pos[0], pos[1], pos[2]});
     if (bodys_tracks[j].size() > tracks_max_len[j]) {
       bodys_tracks[j].pop_front();
-    }
-  }
-}
-
-std::vector<std::vector<int>>
-mujoco_thread::findJointChains(std::string body_name) {
-  std::vector<std::vector<int>> chains;
-  int body_id = mj_name2id(m, mjOBJ_BODY, body_name.c_str());
-  if (body_id == -1) {
-    std::cout << "body: " << body_name << " can't find" << std::endl;
-    return chains;
-  }
-  int tree_id = m->body_treeid[body_id];
-  if (tree_id == -1) {
-    std::cout << "body: " << body_name << " tree_id can't find" << std::endl;
-    return chains;
-  }
-  // 使用map存储父子关系
-  std::map<int, std::vector<int>> children_map;
-
-  for (int i = 0; i < m->nv; i++) {
-    if (m->dof_parentid[i] != -1 && m->dof_treeid[i] == tree_id) {
-      int parent_jnt = m->dof_jntid[m->dof_parentid[i]];
-      int child_jnt = m->dof_jntid[i];
-
-      // 只有当父关节和子关节不同时才添加关系
-      if (parent_jnt != child_jnt) {
-        children_map[parent_jnt].push_back(child_jnt);
-      }
-    }
-  }
-
-  // 输出父子关系
-  for (const auto &pair : children_map) {
-    std::cout << "parent " << pair.first << std::endl;
-    print_vec(pair.second, "sub");
-  }
-
-  // 找到根节点（没有父节点的节点）
-  std::set<int> all_children;
-  for (const auto &pair : children_map) {
-    for (int child : pair.second) {
-      all_children.insert(child);
-    }
-  }
-
-  std::vector<int> roots;
-  for (const auto &pair : children_map) {
-    if (all_children.find(pair.first) == all_children.end()) {
-      roots.push_back(pair.first);
-    }
-  }
-
-  // 从每个根节点开始DFS构建链
-  for (int root : roots) {
-    std::stack<std::pair<int, std::vector<int>>> stack;
-    stack.push({root, {root}});
-
-    while (!stack.empty()) {
-      auto [current, current_chain] = stack.top();
-      stack.pop();
-
-      // 如果当前节点没有子节点，则这是一个完整的链
-      if (children_map.find(current) == children_map.end() ||
-          children_map[current].empty()) {
-        chains.push_back(current_chain);
-      } else {
-        // 将子节点加入栈
-        for (int child : children_map[current]) {
-          std::vector<int> new_chain = current_chain;
-          new_chain.push_back(child);
-          stack.push({child, new_chain});
-        }
-      }
-    }
-  }
-
-  // 输出链信息
-  std::cout << "Found " << chains.size() << " chains:" << std::endl;
-  for (size_t i = 0; i < chains.size(); i++) {
-    std::cout << "Chain(jnt id) " << i << ": ";
-    for (size_t j = 0; j < chains[i].size(); j++) {
-      std::cout << chains[i][j];
-      if (j < chains[i].size() - 1) {
-        std::cout << " -> ";
-      }
-    }
-    std::cout << std::endl;
-  }
-
-  return chains;
-}
-
-void mujoco_thread::random_jnt(std::vector<int> jnt_ids) {
-  for (int jnt_id : jnt_ids) {
-    if (jnt_id >= 0 && jnt_id < m->nq && m->jnt_type[jnt_id] != mjJNT_FREE) {
-      int qpos_id = m->jnt_qposadr[jnt_id];
-      double jnt_min = m->jnt_range[jnt_id * 2];
-      double jnt_max = m->jnt_range[jnt_id * 2 + 1];
-      double random_value =
-          jnt_min + (jnt_max - jnt_min) * (rand() / (double)RAND_MAX);
-      d->qpos[qpos_id] = random_value;
     }
   }
 }

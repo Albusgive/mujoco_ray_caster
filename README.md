@@ -231,6 +231,44 @@ def get_ray_caster_info(model: mujoco.MjModel, data: mujoco.MjData, sensor_name:
     )
     return h_ray_num, v_ray_num, data_ps
 ```
-
+# Demo
+## C++
+```
+cd demo/C++
+mkdir build
+cd build
+cmake ..
+make
+./sensor_data
+```
+## Python
+```
+cd demo/Python
+python3 sensor_data_viewer.py
+python3 view_launch.py
+```
+## ROS2
+注意：需要安装cyclonedds-cpp,fastdds使用会存在bug
+```
+sudo apt update
+sudo apt install ros-<distro>-rmw-cyclonedds-cpp
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+```
+### C++&cmake
+```
+cd demo/ROS2/C++
+mkdir build
+cd build
+cmake ..
+make
+./sensor_data
+```
+### C++&colcon
+```
+cd demo/ROS2/colcon
+colcon build
+source install/setup.bash
+ros2 run ray_caster sensor_data
+```
 # 技术交流
 ![](./image/qq.jpg)

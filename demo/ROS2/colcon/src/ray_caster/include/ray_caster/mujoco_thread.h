@@ -5,12 +5,10 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <map>
+#include <mujoco/mjtnum.h>
 #include <mujoco/mujoco.h>
 #include <mutex>
 #include <queue>
-#include <set>
-#include <stack>
 #include <string>
 #include <thread>
 #include <utility>
@@ -25,6 +23,7 @@ public:
   ~mujoco_thread();
 
   void load_model(std::string model_file);
+  void load_model(mjModel *m);
   void set_window_size(int width, int height);
   void set_window_title(std::string title);
   void set_max_FPS(double max_FPS);
@@ -33,18 +32,16 @@ public:
   void reset();
 
   // 键盘回调,继承后可重载后接收键盘事件，可用于自定义cmd
-  virtual void keyboard_press(std::string key) {}
+  virtual void keyboard_press(std::string key) {};
   // lable value 绘制在左侧中间位置
 
   // 调用之后关闭窗口会停止仿真
   void connect_windows_sim();
   void sim();
-  bool step_or_forward = true;// true:step false:forward
   // 在子线程使用sim
   void sim2thread();
   std::thread sim_thread;
-  virtual void step();
-  virtual void simend();
+  virtual void step() = 0;
   // 在step之后 不影响渲染线程的操作建议在这执行
   virtual void step_unlock();
   virtual void vis_cfg();
@@ -79,7 +76,7 @@ public:
    */
   void bind_target_point(std::string body_name);
 
-  std::atomic<double> realtime{1.0};
+  std::atomic<double> realtime = 1.0;
   int sub_step = 1;
   // 渲染
   void render();
@@ -183,23 +180,7 @@ private:
 
 public:
   std::vector<mjtNum> get_sensor_data(const std::string &sensor_name);
-  void get_sensor_data(const std::string &sensor_name, int &data_pos, int &dim);
   void draw_line(mjvScene *scn, mjtNum *from, mjtNum *to, float rgba[4]);
-  void draw_arrow(mjvScene *scn, mjtNum *from, mjtNum *to, mjtNum width,
-                  float rgba[4]);
   void draw_geom(mjvScene *scn, int type, mjtNum *size, mjtNum *pos,
                  mjtNum *mat, float rgba[4]);
-  // 获取从body中root到末端关节的链
-  std::vector<std::vector<int>> findJointChains(std::string body_name);
-  // 在jnt的范围内随机给定数值到qpos
-  void random_jnt(std::vector<int> jnt_ids);
-  template <typename T> void print_vec(std::vector<T> vec, std::string name) {
-    if (vec.empty())
-      return;
-    std::cout << name << ": ";
-    for (auto &v : vec) {
-      std::cout << v << " ";
-    }
-    std::cout << std::endl;
-  }
 };
