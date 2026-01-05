@@ -321,3 +321,5 @@ demo/ROS2/colcon/log/build_2025-10-21_22-24-52/ray_caster/stderr.log
 demo/ROS2/colcon/log/build_2025-10-21_22-24-52/ray_caster/stdout_stderr.log
 demo/ROS2/colcon/log/build_2025-10-21_22-24-52/ray_caster/stdout.log
 demo/ROS2/colcon/log/build_2025-10-21_22-24-52/ray_caster/streams.log
+lib/libsensor_ray.so
+

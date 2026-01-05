@@ -192,7 +192,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
   for (int i = 0; i < n_sensor_data; i++) {
     switch (sensor_data_list[i].type) {
     case DataType::data:
-      sensor_data_list[i].func = [=](mjtNum *data) {
+      sensor_data_list[i].func = [=, this](mjtNum *data) {
         ray_caster->get_data(data, sensor_data_list[i].is_inf_max);
       };
       sensor_data_list[i].data_point = data_pos;
@@ -200,7 +200,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray;
       break;
     case DataType::image:
-      sensor_data_list[i].func = [=](mjtNum *data) {
+      sensor_data_list[i].func = [=, this](mjtNum *data) {
         ray_caster->get_normal_data(data, sensor_data_list[i].is_noise,
                                     sensor_data_list[i].is_inf_max,
                                     sensor_data_list[i].is_inv, 255.0);
@@ -210,7 +210,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray;
       break;
     case DataType::normal:
-      sensor_data_list[i].func = [=](mjtNum *data) {
+      sensor_data_list[i].func = [=, this](mjtNum *data) {
         ray_caster->get_normal_data(data, sensor_data_list[i].is_noise,
                                     sensor_data_list[i].is_inf_max,
                                     sensor_data_list[i].is_inv, 1.0);
@@ -220,7 +220,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray;
       break;
     case DataType::pos_w:
-      sensor_data_list[i].func = [=](mjtNum *data) {
+      sensor_data_list[i].func = [=, this](mjtNum *data) {
         ray_caster->get_data_pos_w(data);
       };
       sensor_data_list[i].data_point = data_pos;
@@ -228,7 +228,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray * 3;
       break;
     case DataType::pos_b:
-      sensor_data_list[i].func = [=](mjtNum *data) {
+      sensor_data_list[i].func = [=, this](mjtNum *data) {
         ray_caster->get_data_pos_b(data);
       };
       sensor_data_list[i].data_point = data_pos;
