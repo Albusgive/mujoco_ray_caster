@@ -1,10 +1,13 @@
 **Languages:** 
 [English](README.md) | [简体中文](README.zh-CN.md)
+
 # Sensor RayCaster Plugins
-绑定在camear上，基于mj_ray实现的raycaster传感器,raycaster的参数尽量贴近isaaclab
-其中raycaster_src可以直接使用C++ API，[参考](https://github.com/Albusgive/go2w_sim2sim)         
-[📺视频演示](https://www.bilibili.com/video/BV1SSe1zLEVf/?spm_id_from=333.1387.homepage.video_card.click&vd_source=71e0e4952bb37bdc39eaabd9c08be754)    
-[🤖插件功能演示](https://www.bilibili.com/video/BV1wYnvzgExg/?spm_id_from=333.1387.homepage.video_card.click&vd_source=71e0e4952bb37bdc39eaabd9c08be754)
+Raycaster sensor plugins bound to a camera, implemented based on `mj_ray`. The raycaster parameters are designed to be as close as possible to Isaac Lab.
+
+The `raycaster_src` can access the C++ API directly. [Reference](https://github.com/Albusgive/go2w_sim2sim)         
+[📺 Video Demo](https://www.bilibili.com/video/BV1SSe1zLEVf/?spm_id_from=333.1387.homepage.video_card.click&vd_source=71e0e4952bb37bdc39eaabd9c08be754)    
+[🤖 Plugin Function Demo](https://www.bilibili.com/video/BV1wYnvzgExg/?spm_id_from=333.1387.homepage.video_card.click&vd_source=71e0e4952bb37bdc39eaabd9c08be754)
+
 ## sensors
 mujoco.sensor.ray_caster            
 ![](./image/raycaster.png)
@@ -12,29 +15,34 @@ mujoco.sensor.ray_caster_camera
 ![](./image/raycaster_camera.png) 
 mujoco.sensor.ray_caster_lidar          
 ![](./image/raycaster_lidar.png)    
+
 # Build
-注意clone的mujoco版本要和将要使用的版本一致     
+**Note:** The cloned MuJoCo version must match the version you intend to use.
+
 `git clone https://github.com/google-deepmind/mujoco.git`   
 `cd mujoco/plugin`      
 `git clone https://github.com/Albusgive/mujoco_ray_caster.git`  
 `sudo apt-get install libeigen3-dev`   
 `cd ..`     
-修改mujoco的CMakeLists.txt
+
+Modify `CMakeLists.txt` in the mujoco directory:
 ```cmake
 add_subdirectory(plugin/elasticity)
 add_subdirectory(plugin/actuator)
 add_subdirectory(plugin/sensor)
 add_subdirectory(plugin/sdf)
-# 新增路径
+# Add new path
 add_subdirectory(plugin/mujoco_ray_caster)
 ```
+
 `mkdir build`       
 `cd build`      
 `cmake ..`      
-`cmake --build . #多线程编译使用 cmake --build . -j线程数`   
+`cmake --build . # For multi-threaded compilation use: cmake --build . -j<num_threads>`   
 `cd bin`        
 `mkdir mujoco_plugin`   
 `cp ../lib/*.so ./mujoco_plugin/`   
+
 test1:      
 `./simulate ../../plugin/mujoco_ray_caster/model/ray_caster.xml`        
 test2:      
@@ -45,54 +53,59 @@ test2:
 ## base config
 
 ### SensorData
-**sensor_data_types:string list(n)**   
-通过下划线组合数据模式，value任意长度字符串数组，会把这些数据按顺序拼接到mjData.sensordata中
-date_type:  
-&emsp;data 距离 米     
-&emsp;image [0,255] (dis_range)的图像数据，开启噪声后可以选择读取源图像和噪声图   
-&emsp;normal [0,1] (dis_range)归一化后数据，同上      
-&emsp;pos_w 坐标系下射线命中点  没命中或超出测距为NAN       
-&emsp;pos_b 传感器坐标系下射线命中点  没命中或超出测距为NAN     
-&emsp;inv 反转数据      
-&emsp;inf_zero 射线没有检测到的数据给定0，没有开启默认为inf_max     
-&emsp;noise 数据是否带有噪声        
+**sensor_data_types: string list(n)**   
+Construct data modes via underscores. The value is an array of strings of arbitrary length. These data will be concatenated into `mjData.sensordata` in order.
 
-| cfg \ data_type | data     | image    | normal   | pos_w    | pos_b    |
-| --------------- | -------- | -------- | -------- | -------- | -------- |
-| inv             | &#x2716; | &#x2714; | &#x2714; | &#x2716; | &#x2716; |
-| inf_zero        | &#x2714; | &#x2714; | &#x2714; | &#x2716; | &#x2716; |
-| noise           | &#x2714; | &#x2714; | &#x2714; | &#x2716; | &#x2716; |
+data_type:  
+&emsp;`data`: Distance (meters).     
+&emsp;`image`: Image data [0, 255] (scaled to `dis_range`). If noise is enabled, you can choose to read the source image or the noise image.   
+&emsp;`normal`: Normalized data [0, 1] (scaled to `dis_range`), same as above.      
+&emsp;`pos_w`: Ray hit point in the World coordinate system. Returns NAN if missed or out of range.       
+&emsp;`pos_b`: Ray hit point in the Sensor coordinate system. Returns NAN if missed or out of range.     
+&emsp;`inv`: Inverted data.      
+&emsp;`inf_zero`: If the ray detects nothing, return 0. If not enabled, it defaults to `inf_max`.     
+&emsp;`noise`: Whether the data contains noise.        
+&emsp;`distance_to_image_plane`: Planar distance.       
+&emsp;`image_plane_image`: Image based on planar distance.     
+&emsp;`image_plane_normal`: Normalized planar distance.        
+
+| cfg \ data_type | data | image | normal | distance_to_image_plane | image_plane_image | image_plane_normal | pos_w | pos_b |
+|-----------------|------|-------|--------|-------------------------|-------------------|---------------------|-------|-------|
+| inv             | ✘    | ✔     | ✔      | ✘                       | ✔                 | ✔                   | ✘     | ✘     |
+| inf_zero        | ✔    | ✔     | ✔      | ✔                       | ✔                 | ✔                   | ✘     | ✘     |
+| noise           | ✔    | ✔     | ✔      | ✔                       | ✔                 | ✔                   | ✘     | ✘     |
 
 
-exapmle: 
+
+example: 
 ```XML
 <config key="sensor_data_types" value="data data_noise data_inf_zero inv_image_inf_zero noise_image pos_w pos_b normal inv_normal" />
 ```
 
-**dis_range:real(6),“1 1 1 0 0 0”**     
-&emsp;测距范围
+**dis_range: real(6), "1 1 1 0 0 0"**     
+&emsp;Measurement range.
 
-**geomgroup:real(6),“1 1 1 0 0 0”**     
-&emsp;检测哪些组的几何体
+**geomgroup: real(6), "1 1 1 0 0 0"**     
+&emsp;Which geometry groups to detect.
 
-**detect_parentbody:real(1),“0”**     
-&emsp;是否检测传感器父body
+**detect_parentbody: real(1), "0"**     
+&emsp;Whether to detect the sensor's parent body.
 
 ### VisVisualize
-**draw_deep_ray:real(7),“1 5 0 1 0 0.5 1”**     
-&emsp;绘制射线 ratio width r g b a edge
+**draw_deep_ray: real(7), "1 5 0 1 0 0.5 1"**     
+&emsp;Draw rays: ratio, width, r, g, b, a, edge.
 
-**draw_deep_ray_ids:real(6+n),“1 5 1 1 0 0.5 list”**     
-&emsp;绘制指定id的射线 ratio width r g b a id_list
+**draw_deep_ray_ids: real(6+n), "1 5 1 1 0 0.5 list"**     
+&emsp;Draw rays with specific IDs: ratio, width, r, g, b, a, id_list.
 
-**draw_deep:real(6),“1 5 0 0 1 0.5”**     
-&emsp;绘制测量深度的射线 ratio width r g b a
+**draw_deep: real(6), "1 5 0 0 1 0.5"**     
+&emsp;Draw depth measurement rays: ratio, width, r, g, b, a.
 
-**draw_hip_point:real(6),“1 0.02 1 0 0 0.5”**     
-&emsp;绘制射线命中点 ratio point_size r g b a
+**draw_hip_point: real(6), "1 0.02 1 0 0 0.5"**     
+&emsp;Draw ray hit points: ratio, point_size, r, g, b, a.
 
 
-exapmle:
+example:
 ```XML
 <config key="draw_deep_ray" value="1 5 0 1 1 0.5 1" />
 <config key="draw_deep_ray_ids" value="1 10 1 0 0 0.5 1 2 3 4 5 30" />
@@ -101,9 +114,10 @@ exapmle:
 ```
 
 ### Noise
-**noise_type:[uniform,gaussian,noise1,noise2]**     
-&emsp;噪声类型
-**noise_cfg:n**     
+**noise_type: [uniform, gaussian, noise1, noise2]**     
+&emsp;Type of noise.
+
+**noise_cfg: n**     
 |noise_type|noise_cfg|
 |-|-|
 |uniform|low high seed|
@@ -112,10 +126,11 @@ exapmle:
 |noise2|low high zero_probability min_angle max_angle low_probability high_probability seed|
 
 #### noise1
-在均值噪声基础上增加随机置0
+Adds random zeroing (dropout) on top of mean noise.
 
 #### noise2
-noise2是根据近似的射线入射角度进行判断的噪声，在noise1的基础上从最小入射角到最到入射角[90,180]数据为0的概率是[low_probability,high_probability]
+Noise2 is based on the approximate ray incidence angle. Building on noise1, the probability of the data being 0 ranges from `[low_probability, high_probability]` as the incidence angle goes from `min_angle` to `max_angle` (typically [90, 180] degrees).
+
 <div align="center">
 <img src="./image/noise2_1.png" width=200/>
 <img src="./image/noise2_2.png" width=200/>
@@ -129,61 +144,63 @@ noise2是根据近似的射线入射角度进行判断的噪声，在noise1的�
 
 
 ### Other
-**compute_time_log:real(1),“0**     
-&emsp;打印计算时间
+**compute_time_log: real(1), "0"**     
+&emsp;Print computation time.
 
-**n_step_update:real(1),“1**     
-&emsp;隔n_step计算一次
+**n_step_update: real(1), "1"**     
+&emsp;Calculate every n steps.
 
-**num_thread:real(1),“0**     
-&emsp;增加n个线程计算ray，提高性能，使用该参数时如果线程比较多需要每次重启程序
+**num_thread: real(1), "0"**     
+&emsp;Use n additional threads to calculate rays to improve performance. When using this parameter with many threads, you may need to restart the program every time.
 
 ## RayCaster
-**resolution:real(1),“0”**     
-&emsp;分辨率
+**resolution: real(1), "0"**     
+&emsp;Resolution.
 
-**size:real(2),“0 0”**     
-&emsp;尺寸 米
+**size: real(2), "0 0"**     
+&emsp;Size (meters).
 
-**type:[base,yaw,world]”**     
-&emsp;base 自坐标系相机lookat
-&emsp;yaw 自坐标系yaw,世界z向下
-&emsp;world 世界坐标系z向下
+**type: [base, yaw, world]**     
+&emsp;`base`: Camera lookat in local frame.
+&emsp;`yaw`: Local frame yaw, World Z down.
+&emsp;`world`: World frame Z down.
 
 
 ## RayCasterCamera
-**focal_length:real(1),“0”**     
-&emsp;焦距 cm
+**focal_length: real(1), "0"**     
+&emsp;Focal length (cm).
 
-**horizontal_aperture:real(1),“0”**     
-&emsp;画面水平尺寸 cm
+**horizontal_aperture: real(1), "0"**     
+&emsp;Horizontal aperture size (cm).
 
-**vertical_aperture:real(1),“0”**     
-&emsp;画面垂直尺寸 cm
+**vertical_aperture: real(1), "0"**     
+&emsp;Vertical aperture size (cm).
 
-**size:real(2),“0 0”**     
-&emsp;h_ray_num,v_ray_num
+**size: real(2), "0 0"**     
+&emsp;`h_ray_num`, `v_ray_num`.
+
+**baseline: real(1), "0"**     
+&emsp;If it is a stereo depth camera, you need to set the baseline, which is the distance between the two cameras.
 
 
 ## RayCasterLidar
-**fov_h:real(1),“0”**     
-&emsp;fov_h 角度
+**fov_h: real(1), "0"**     
+&emsp;Horizontal FOV (degrees).
 
-**fov_v:real(1),“0”**     
-&emsp;fov_v 角度
+**fov_v: real(1), "0"**     
+&emsp;Vertical FOV (degrees).
 
-**size:real(2),“0 0”**     
-&emsp;h_ray_num,v_ray_num
+**size: real(2), "0 0"**     
+&emsp;`h_ray_num`, `v_ray_num`.
 
 
 # GetData
-demo中提供了读取演示          
-mjData.sensordata中是所有的数据     
-mjData.plugin_state中储存了数据info
-h_ray_num,v_ray_num, list[data_point,data_size]
-data_point是相对于该传感器总数据的数据位置
+The demo provides examples for reading data.          
+`mjData.sensordata` contains all the data.     
+`mjData.plugin_state` stores data info: `h_ray_num`, `v_ray_num`, `list[data_point, data_size]`.
+`data_point` is the data position relative to the total data of this sensor.
 
-exapmle:    
+example:    
 **C++:**
 ```C++
 std::tuple<int, int, std::vector<std::pair<int, int>>>
@@ -233,7 +250,7 @@ def get_ray_caster_info(model: mujoco.MjModel, data: mujoco.MjData, sensor_name:
 ```
 # Demo
 ## C++
-```
+```bash
 cd demo/C++
 mkdir build
 cd build
@@ -242,20 +259,20 @@ make
 ./sensor_data
 ```
 ## Python
-```
+```bash
 cd demo/Python
 python3 sensor_data_viewer.py
 python3 view_launch.py
 ```
 ## ROS2
-注意：需要安装cyclonedds-cpp,fastdds使用会存在bug
-```
+**Note:** You need to install `cyclonedds-cpp`. Using `fastdds` will result in bugs.
+```bash
 sudo apt update
 sudo apt install ros-<distro>-rmw-cyclonedds-cpp
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ```
-### C++&cmake
-```
+### C++ & cmake
+```bash
 cd demo/ROS2/C++
 mkdir build
 cd build
@@ -263,12 +280,12 @@ cmake ..
 make
 ./sensor_data
 ```
-### C++&colcon
-```
+### C++ & colcon
+```bash
 cd demo/ROS2/colcon
 colcon build
 source install/setup.bash
 ros2 run ray_caster sensor_data
 ```
-# 技术交流
+# Contact
 ![](./image/qq.jpg)
