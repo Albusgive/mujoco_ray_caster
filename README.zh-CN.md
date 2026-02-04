@@ -56,12 +56,16 @@ date_type:
 &emsp;inv 反转数据      
 &emsp;inf_zero 射线没有检测到的数据给定0，没有开启默认为inf_max     
 &emsp;noise 数据是否带有噪声        
+&emsp;distance_to_image_plane       
+&emsp;image_plane_image     
+&emsp;image_plane_normal        
 
-| cfg \ data_type | data     | image    | normal   | pos_w    | pos_b    |
-| --------------- | -------- | -------- | -------- | -------- | -------- |
-| inv             | &#x2716; | &#x2714; | &#x2714; | &#x2716; | &#x2716; |
-| inf_zero        | &#x2714; | &#x2714; | &#x2714; | &#x2716; | &#x2716; |
-| noise           | &#x2714; | &#x2714; | &#x2714; | &#x2716; | &#x2716; |
+| cfg \ data_type | data | image | normal | distance_to_image_plane | image_plane_image | image_plane_normal | pos_w | pos_b |
+|-----------------|------|-------|--------|-------------------------|-------------------|---------------------|-------|-------|
+| inv             | ✘    | ✔     | ✔      | ✘                       | ✔                 | ✔                   | ✘     | ✘     |
+| inf_zero        | ✔    | ✔     | ✔      | ✔                       | ✔                 | ✔                   | ✘     | ✘     |
+| noise           | ✔    | ✔     | ✔      | ✔                       | ✔                 | ✔                   | ✘     | ✘     |
+
 
 
 exapmle: 
@@ -163,6 +167,9 @@ noise2是根据近似的射线入射角度进行判断的噪声，在noise1的�
 
 **size:real(2),“0 0”**     
 &emsp;h_ray_num,v_ray_num
+
+**baseline:real(1),“0”**     
+&emsp;如果是双目深度相机则需要设置baseline，即两个相机之间的距离
 
 
 ## RayCasterLidar

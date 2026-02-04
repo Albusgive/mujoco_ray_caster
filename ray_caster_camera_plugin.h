@@ -15,9 +15,9 @@ public:
 
   static void RegisterPlugin();
 
-  static constexpr std::array<const char *, 5> ray_attributes = {
+  static constexpr std::array<const char *, 6> ray_attributes = {
       "focal_length", "horizontal_aperture", "vertical_aperture", "size",
-      "dis_range"};
+      "dis_range","baseline"};
 
 private:
   RayCasterCameraPlugin(const mjModel *m, mjData *d, int instance);

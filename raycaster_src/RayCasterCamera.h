@@ -6,43 +6,25 @@
 
 class RayCasterCameraCfg {
 public:
-  const mjModel *m;
-  mjData *d;
-  std::string cam_name;
+  const mjModel *m = nullptr;
+  mjData *d = nullptr;
+  std::string cam_name = "";
   mjtNum focal_length = 24.0;          // 焦距 (cm)
   mjtNum horizontal_aperture = 20.955; // 水平孔径 (cm)
   mjtNum vertical_aperture = 0;
   int h_ray_num = 160;
   int v_ray_num = 90;
-  std::array<mjtNum, 2> dis_range;
+  std::array<mjtNum, 2> dis_range = {0.0, 100.0};
   bool is_detect_parentbody = false;
+  mjtNum baseline = 0.0;           // 基线距离 (cm)
 };
 
 class RayCasterCamera : public RayCaster {
 public:
   RayCasterCamera();
-  RayCasterCamera(RayCasterCameraCfg &cfg);
-  /** @brief 初始化相机 - 使用焦距和孔径
-   * @param m mjModel
-   * @param d mjData
-   * @param cam_id 相机id
-   * @param focal_length 焦距 (cm)
-   * @param horizontal_aperture 水平孔径 (cm)
-   * @param h_ray_num 水平射线数量
-   * @param v_ray_num 垂直射线数量
-   * @param dis_range 距离范围 [最小，最大] (M)
-   */
-  RayCasterCamera(const mjModel *m, mjData *d, std::string cam_name,
-                  mjtNum focal_length, mjtNum horizontal_aperture,
-                  int h_ray_num, int v_ray_num,
-                  const std::array<mjtNum, 2> &dis_range,
-                  mjtNum vertical_aperture = 0,
-                  bool is_detect_parentbody = false);
+  RayCasterCamera(const RayCasterCameraCfg &cfg);
   ~RayCasterCamera();
-  void init(const mjModel *m, mjData *d, std::string cam_name, mjtNum focal_length,
-            mjtNum horizontal_aperture, int h_ray_num, int v_ray_num,
-            const std::array<mjtNum, 2> &dis_range, mjtNum vertical_aperture,
-            bool is_detect_parentbody);
+  void init(const RayCasterCameraCfg &cfg);
 
 private:
   mjtNum focal_length = 24.0;          // 焦距 (cm)
@@ -51,8 +33,26 @@ private:
   mjtNum aspect_ratio = 16.0 / 9.0; // 宽高比
   mjtNum h_pixel_size = 0.0;        // 像素水平尺寸 (cm)
   mjtNum v_pixel_size = 0.0;        // 像素垂直尺寸 (cm)
+  mjtNum baseline = 0.0;           // 基线距离 (cm)
+  mjtNum left_pos_w[3], right_pos_w[3]; // Stereo相机位置
 
   // 计算射线向量
   void compute_ray_vec_virtual_plane();
   void create_rays() override { compute_ray_vec_virtual_plane(); };
+
+  struct StereoTaskData {
+    RayCasterCamera *instance; // 指向你的类实例
+    int start;
+    int end;
+    bool is_left;
+  };
+  std::vector<StereoTaskData> stereo_task_datas;
+  static void *stereo_task_func(void *user_data) {
+    StereoTaskData *data = static_cast<StereoTaskData *>(user_data);
+    data->instance->compute_stereo_ray(data->is_left,data->start, data->end);
+    return nullptr;
+  }
+  void set_num_thread(int n) override;
+  void compute_stereo_ray(bool is_left,int start, int end);
+  void compute_distance() override;
 };

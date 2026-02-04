@@ -144,7 +144,9 @@ public:
   DrawHipPoint hip_point;
 };
 
-enum class DataType { data, image, normal, pos_w, pos_b };
+enum class DataType { data, image, normal, 
+  distance_to_image_plane,image_plane_image,image_plane_normal,
+   pos_w, pos_b };
 
 class SensorData {
 public:
@@ -170,6 +172,12 @@ public:
       type = DataType::image;
     else if (data_type.find("normal") != std::string::npos)
       type = DataType::normal;
+    else if (data_type.find("distance_to_image_plane") != std::string::npos)
+      type = DataType::distance_to_image_plane;
+    else if (data_type.find("image_plane_image") != std::string::npos)
+      type = DataType::image_plane_image;
+    else if (data_type.find("image_plane_normal") != std::string::npos)
+      type = DataType::image_plane_normal;
     else if (data_type.find("pos_w") != std::string::npos)
       type = DataType::pos_w;
     else if (data_type.find("pos_b") != std::string::npos)
@@ -226,7 +234,6 @@ public:
       "compute_time_log",   "n_step_update",     "num_thread"};
   std::vector<std::pair<std::string_view, int>> noise_attributes = {
       {"uniform", 3}, {"gaussian", 3}, {"noise1", 4}, {"noise2", 8}};
-  /*--------通用接口--------*/
 };
 
 } // namespace mujoco::plugin::sensor

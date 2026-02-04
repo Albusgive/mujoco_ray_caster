@@ -3,38 +3,30 @@
 
 RayCasterLidar::RayCasterLidar() {}
 
-RayCasterLidar::RayCasterLidar(RayCasterLidarCfg &cfg) {
-
-  init(cfg.m, cfg.d, cfg.cam_name, cfg.fov_h, cfg.fov_v, cfg.h_ray_num,
-       cfg.v_ray_num, cfg.dis_range, cfg.is_detect_self);
-}
-
-RayCasterLidar::RayCasterLidar(const mjModel *m, mjData *d, std::string cam_name,
-                               mjtNum fov_h, mjtNum fov_v, int h_ray_num,
-                               int v_ray_num,
-                               const std::array<mjtNum, 2> &dis_range,
-                               bool is_detect_self) {
-  init(m, d, cam_name, fov_h, fov_v, h_ray_num, v_ray_num, dis_range,
-       is_detect_self);
+RayCasterLidar::RayCasterLidar(const RayCasterLidarCfg &cfg) {
+  init(cfg);
 }
 
 RayCasterLidar::~RayCasterLidar() {
-  // delete[] _ray_vec;
-  // delete[] ray_vec;
-  // delete[] geomids;
-  // delete[] dist;
-  // delete[] dist_ratio;
 }
 
-void RayCasterLidar::init(const mjModel *m, mjData *d, std::string cam_name,
-                          mjtNum fov_h, mjtNum fov_v, int h_ray_num,
-                          int v_ray_num, const std::array<mjtNum, 2> &dis_range,
-                          bool is_detect_self) {
-  this->fov_h = fov_h;
-  this->fov_v = fov_v;
-  h_res = fov_h / (h_ray_num - 1);
-  v_res = fov_v / (v_ray_num - 1);
-  _init(m, d, cam_name, h_ray_num, v_ray_num, dis_range, is_detect_self);
+void RayCasterLidar::init(const RayCasterLidarCfg &cfg) {
+  this->fov_h = cfg.fov_h;
+  this->fov_v = cfg.fov_v;
+  
+  // 防止除0
+  if (cfg.h_ray_num > 1)
+      this->h_res = this->fov_h / (cfg.h_ray_num - 1);
+  else 
+      this->h_res = 0;
+
+  if (cfg.v_ray_num > 1)
+      this->v_res = this->fov_v / (cfg.v_ray_num - 1);
+  else 
+      this->v_res = 0;
+
+  // 调用基类初始化
+  _init(cfg.m, cfg.d, cfg.cam_name, cfg.h_ray_num, cfg.v_ray_num, cfg.dis_range, cfg.is_detect_self);
 }
 
 void RayCasterLidar::create_rays() {

@@ -8,31 +8,11 @@
 #include <utility>
 
 RayCaster::RayCaster() {}
-
-RayCaster::RayCaster(RayCasterCfg &cfg) {
-  init(cfg.m, cfg.d, cfg.cam_name, cfg.resolution, cfg.size, cfg.dis_range,
-       cfg.type, cfg.is_detect_parentbody);
+// 构造函数只接受 Cfg
+RayCaster::RayCaster(const RayCasterCfg &cfg) {
+  init(cfg);
 }
 
-RayCaster::RayCaster(const mjModel *m, mjData *d, std::string cam_name,
-                     mjtNum resolution, const std::array<mjtNum, 2> &size,
-                     const std::array<mjtNum, 2> &dis_range, RayCasterType type,
-                     bool is_detect_parentbody) {
-
-  init(m, d, cam_name, resolution, size, dis_range, type, is_detect_parentbody);
-}
-
-void RayCaster::init(const mjModel *m, mjData *d, std::string cam_name,
-                     mjtNum resolution, const std::array<mjtNum, 2> &size,
-                     const std::array<mjtNum, 2> &dis_range, RayCasterType type,
-                     bool is_detect_parentbody) {
-  this->resolution = resolution;
-  this->size[0] = size[1];
-  this->size[1] = size[0];
-  this->type = type;
-  _init(m, d, cam_name, (this->size[0] / resolution) + 1,
-        (this->size[1] / resolution) + 1, dis_range, is_detect_parentbody);
-}
 
 RayCaster::~RayCaster() {
   delete[] _ray_vec;
@@ -41,6 +21,20 @@ RayCaster::~RayCaster() {
   delete[] dist;
   delete[] dist_ratio;
   mju_threadPoolDestroy(pool);
+}
+
+// init 只接受 Cfg
+void RayCaster::init(const RayCasterCfg &cfg) {
+  this->resolution = cfg.resolution;
+  this->size[0] = cfg.size[1]; // 注意这里宽高交换了，和原代码逻辑一致
+  this->size[1] = cfg.size[0];
+  this->type = cfg.type;
+  // 根据 resolution 计算射线数量
+  int h_num = (int)(this->size[0] / resolution) + 1;
+  int v_num = (int)(this->size[1] / resolution) + 1;
+  // 调用内部保护的 _init 进行内存分配
+  _init(cfg.m, cfg.d, cfg.cam_name, h_num, v_num, cfg.dis_range,
+        cfg.is_detect_parentbody);
 }
 
 void RayCaster::_init(const mjModel *m, mjData *d, std::string cam_name,
@@ -230,7 +224,7 @@ void RayCaster::compute_ray(int start, int end) {
                            no_detect_body_id, geomid);
     geomids[i] = geomid[0];
     if (geomid[0] == -1) {
-      dist_ratio[i] = 1;
+      dist_ratio[i] = 0;
     } else if (dist_ratio[i] > 1) {
       dist_ratio[i] = 1;
     } else if (dist_ratio[i] < deep_min_ratio) {
@@ -336,7 +330,7 @@ void RayCaster::draw_geom(mjvScene *scn, int type, mjtNum *size, mjtNum *pos,
   mjv_initGeom(geom, type, size, pos, mat, rgba);
 }
 
-void RayCaster::draw_ary(int idx, int width, float *color, mjvScene *scn,
+void RayCaster::draw_ray(int idx, int width, float *color, mjvScene *scn,
                          bool is_scale) {
   mjtNum start[3] = {pos[0], pos[1], pos[2]};
   mjtNum end[3] = {pos[0], pos[1], pos[2]};
@@ -364,21 +358,21 @@ void RayCaster::draw_deep_ray(mjvScene *scn, int ratio, int width, bool edge,
   if (edge) {
     for (int i = 0; i < v_ray_num; i += ratio) {
       int idx = _get_idx(i, 0);
-      draw_ary(idx, width, color_, scn, false);
+      draw_ray(idx, width, color_, scn, false);
       idx = _get_idx(i, h_ray_num - 1);
-      draw_ary(idx, width, color_, scn, false);
+      draw_ray(idx, width, color_, scn, false);
     }
     for (int j = 0; j < h_ray_num; j += ratio) {
       int idx = _get_idx(0, j);
-      draw_ary(idx, width, color_, scn, false);
+      draw_ray(idx, width, color_, scn, false);
       idx = _get_idx(v_ray_num - 1, j);
-      draw_ary(idx, width, color_, scn, false);
+      draw_ray(idx, width, color_, scn, false);
     }
   } else {
     for (int i = 0; i < v_ray_num; i += ratio) {
       for (int j = 0; j < h_ray_num; j += ratio) {
         int idx = _get_idx(i, j);
-        draw_ary(idx, width, color_, scn, false);
+        draw_ray(idx, width, color_, scn, false);
       }
     }
   }
@@ -414,7 +408,7 @@ void RayCaster::draw_deep(mjvScene *scn, int ratio, int width, float *color) {
   for (int i = 0; i < v_ray_num; i += ratio) {
     for (int j = 0; j < h_ray_num; j += ratio) {
       int idx = _get_idx(i, j);
-      draw_ary(idx, width, color_, scn, true);
+      draw_ray(idx, width, color_, scn, true);
     }
   }
 }
@@ -433,7 +427,7 @@ void RayCaster::draw_hip_point(mjvScene *scn, int ratio, mjtNum size,
   for (int i = 0; i < v_ray_num; i += ratio) {
     for (int j = 0; j < h_ray_num; j += ratio) {
       int idx = _get_idx(i, j);
-      if (pos_w[idx * 3] == NAN)
+      if (std::isnan(pos_w[idx * 3]))
         continue;
       draw_geom(scn, mjGEOM_SPHERE, size_, pos_w + (idx * 3), mat, color_);
     }
@@ -491,4 +485,34 @@ void RayCaster::compute_hit_b() {
       mju_addToScl3(pos_b + (data_pos), _ray_vec + (data_pos), dist_ratio[idx]);
     }
   }
+}
+
+std::vector<double>
+RayCaster::get_distance_to_image_plane_vec(bool is_noise, bool is_inf_max) {
+  std::vector<double> data(nray);
+  get_distance_to_image_plane(data, is_noise, is_inf_max);
+  return data;
+}
+
+std::vector<double> RayCaster::get_distance_to_image_plane_normalized_vec(
+    bool is_noise, bool is_inf_max, bool is_inv, double scale) {
+  std::vector<double> data(nray);
+  get_distance_to_image_plane_normalized(data, is_noise, is_inf_max, is_inv,
+                                         scale);
+  return data;
+}
+
+void RayCaster::get_distance_to_image_plane_image(unsigned char *image_data,
+                                                  bool is_noise,
+                                                  bool is_inf_max,
+                                                  bool is_inv) {
+  get_distance_to_image_plane_normalized(image_data, is_noise, is_inf_max,
+                                         is_inv, 255.0);
+}
+
+void RayCaster::get_distance_to_image_plane_inv_image(unsigned char *image_data,
+                                                      bool is_noise,
+                                                      bool is_inf_max) {
+  get_distance_to_image_plane_normalized(image_data, is_noise, is_inf_max, true,
+                                         255.0);
 }

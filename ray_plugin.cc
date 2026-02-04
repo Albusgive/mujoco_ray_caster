@@ -57,7 +57,8 @@ int computeDateSize(const mjModel *m, int instance, int nray) {
   for (int i = 0; i < sensor_data_types.size(); i++) {
     if ((sensor_data_types[i].find("data") != std::string::npos) ||
         (sensor_data_types[i].find("image") != std::string::npos) ||
-        (sensor_data_types[i].find("normal") != std::string::npos)) {
+        (sensor_data_types[i].find("normal") != std::string::npos) ||
+        (sensor_data_types[i].find("plane") != std::string::npos)) {
       n_data += nray;
     } else if ((sensor_data_types[i].find("pos_w") != std::string::npos) ||
                (sensor_data_types[i].find("pos_b") != std::string::npos)) {
@@ -193,7 +194,8 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
     switch (sensor_data_list[i].type) {
     case DataType::data:
       sensor_data_list[i].func = [=, this](mjtNum *data) {
-        ray_caster->get_data(data, sensor_data_list[i].is_inf_max);
+        ray_caster->get_data(data, sensor_data_list[i].is_noise,
+                             sensor_data_list[i].is_inf_max);
       };
       sensor_data_list[i].data_point = data_pos;
       sensor_data_list[i].data_size = nray;
@@ -214,6 +216,35 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
         ray_caster->get_normal_data(data, sensor_data_list[i].is_noise,
                                     sensor_data_list[i].is_inf_max,
                                     sensor_data_list[i].is_inv, 1.0);
+      };
+      sensor_data_list[i].data_point = data_pos;
+      sensor_data_list[i].data_size = nray;
+      data_pos += nray;
+      break;
+    case DataType::distance_to_image_plane:
+      sensor_data_list[i].func = [=, this](mjtNum *data) {
+        ray_caster->get_distance_to_image_plane(
+            data, sensor_data_list[i].is_noise, sensor_data_list[i].is_inf_max);
+      };
+      sensor_data_list[i].data_point = data_pos;
+      sensor_data_list[i].data_size = nray;
+      data_pos += nray;
+      break;
+    case DataType::image_plane_image:
+      sensor_data_list[i].func = [=, this](mjtNum *data) {
+        ray_caster->get_distance_to_image_plane_normalized(
+            data, sensor_data_list[i].is_noise, sensor_data_list[i].is_inf_max,
+            sensor_data_list[i].is_inv, 255.0);
+      };
+      sensor_data_list[i].data_point = data_pos;
+      sensor_data_list[i].data_size = nray;
+      data_pos += nray;
+      break;
+    case DataType::image_plane_normal:
+      sensor_data_list[i].func = [=, this](mjtNum *data) {
+        ray_caster->get_distance_to_image_plane_normalized(
+            data, sensor_data_list[i].is_noise, sensor_data_list[i].is_inf_max,
+            sensor_data_list[i].is_inv, 1.0);
       };
       sensor_data_list[i].data_point = data_pos;
       sensor_data_list[i].data_size = nray;
@@ -246,35 +277,35 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       ReadStringVector(mj_getPluginConfig(m, instance, base_attributes[5]));
   auto noise_cfg =
       ReadVector<mjtNum>(mj_getPluginConfig(m, instance, base_attributes[6]));
-  if (noise.empty())
-    return;
-
-  int seed = 0;
-  for (int i = 0; i < noise_attributes.size(); i++) {
-    if (noise[0].find(noise_attributes[i].first) != std::string::npos) {
-      if (noise_cfg.size() < noise_attributes[i].second - 1)
-        mju_error("RayPlugin: noise_cfg error: %s",
-                  mj_getPluginConfig(m, instance, base_attributes[6]));
-      else if (noise_cfg.size() == noise_attributes[i].second)
-        seed = noise_cfg[noise_attributes[i].second - 1];
-      switch (i) {
-      case 0: {
-        ray_caster->setNoise(
-            ray_noise::UniformNoise(noise_cfg[0], noise_cfg[1], seed));
-      } break;
-      case 1: {
-        ray_caster->setNoise(
-            ray_noise::GaussianNoise(noise_cfg[0], noise_cfg[1], seed));
-      } break;
-      case 2: {
-        ray_caster->setNoise(ray_noise::RayNoise1(noise_cfg[0], noise_cfg[1],
-                                                  noise_cfg[2], seed));
-      } break;
-      case 3: {
-        ray_caster->setNoise(ray_noise::RayNoise2(
-            noise_cfg[0], noise_cfg[1], noise_cfg[2], noise_cfg[3],
-            noise_cfg[4], noise_cfg[5], noise_cfg[6], seed));
-      } break;
+  if (!noise.empty() && !noise_cfg.empty())
+  {
+    int seed = 0;
+    for (int i = 0; i < noise_attributes.size(); i++) {
+      if (noise[0].find(noise_attributes[i].first) != std::string::npos) {
+        if (noise_cfg.size() < noise_attributes[i].second - 1)
+          mju_error("RayPlugin: noise_cfg error: %s",
+                    mj_getPluginConfig(m, instance, base_attributes[6]));
+        else if (noise_cfg.size() == noise_attributes[i].second)
+          seed = noise_cfg[noise_attributes[i].second - 1];
+        switch (i) {
+        case 0: {
+          ray_caster->setNoise(
+              ray_noise::UniformNoise(noise_cfg[0], noise_cfg[1], seed));
+        } break;
+        case 1: {
+          ray_caster->setNoise(
+              ray_noise::GaussianNoise(noise_cfg[0], noise_cfg[1], seed));
+        } break;
+        case 2: {
+          ray_caster->setNoise(ray_noise::RayNoise1(noise_cfg[0], noise_cfg[1],
+                                                    noise_cfg[2], seed));
+        } break;
+        case 3: {
+          ray_caster->setNoise(ray_noise::RayNoise2(
+              noise_cfg[0], noise_cfg[1], noise_cfg[2], noise_cfg[3],
+              noise_cfg[4], noise_cfg[5], noise_cfg[6], seed));
+        } break;
+        }
       }
     }
   }

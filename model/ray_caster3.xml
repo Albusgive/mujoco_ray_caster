@@ -1,0 +1,65 @@
+<mujoco model="ray_caster_test">
+  <include file="scene.xml" />
+  <compiler autolimits="true" />
+  <option timestep="0.002" />
+
+  <extension>
+    <plugin plugin="mujoco.sensor.ray_caster_camera" />
+  </extension>
+  <asset>
+
+  </asset>
+
+  <visual>
+    <headlight ambient=".7 .7 .7" diffuse=".2 .2 .2" specular="0.1 0.1 0.1" />
+    <map znear="0.01" />
+    <!-- <scale contactwidth=".02" contactheight=".5" /> -->
+  </visual>
+
+  <worldbody>
+
+
+    <body pos="0 0 0.2">
+      <!-- <freejoint /> -->
+      <geom type="box" size="0.01 0.05 0.005" rgba="0 1 1 1" />
+      <camera name="RayCasterCamera" ipd="0.095" focal="1 1"
+        sensorsize="2.0 1.1547005"
+        resolution="640 370" xyaxes="0 -1 0 0 0 1" />
+    </body>
+
+    <geom type="box" pos="0.6 0 0" size="0.001 2 1" />
+    <body mocap="true">
+      <geom type="box" pos="0.4 0 0" size="0.01 0.01 1" rgba="0 0 1 1" />
+    </body>
+
+  </worldbody>
+
+  <sensor>
+
+    <plugin name="raycastercamera" plugin="mujoco.sensor.ray_caster_camera" objtype="camera"
+      objname="RayCasterCamera">
+      <config key="focal_length" value="1" />
+      <config key="horizontal_aperture" value="2" />
+      <config key="vertical_aperture" value="1.154700538" />
+      <config key="size" value="64 36" />
+      <config key="dis_range" value="0.01 6" />
+
+
+      <!-- <config key="compute_time_log" value="1" /> -->
+
+      <!-- <config key="draw_deep_ray" value="1 5 1 1 0.2 0.5 1" /> -->
+      <!-- <config key="draw_deep_ray_ids" value="0 10 1 0 0 0.5 1 2 3 4 5 30" />
+      <config key="draw_deep" value="2 5 0 1 0" /> -->
+      <config key="draw_hip_point" value="1 0.02" />
+
+      <config key="sensor_data_types" value="image_plane_image" />
+      <!-- <config key="noise_type" value="noise2" /> -->
+      <!-- <config key="noise_cfg" value="-0.01 0.01 0.05 150 170 0.2 0.4" /> -->
+      <config key="baseline" value="0.095" />
+      <!-- <config key="baseline" value="0.095" /> -->
+    </plugin>
+
+
+  </sensor>
+
+</mujoco>

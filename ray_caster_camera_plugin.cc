@@ -58,6 +58,10 @@ RayCasterCameraPlugin::RayCasterCameraPlugin(const mjModel *m, mjData *d,
       ReadVector<double>(mj_getPluginConfig(m, instance, ray_attributes[4]), 2);
   cfg.dis_range = {dis_range[0], dis_range[1]};
 
+  auto baseline =
+      ReadVector<double>(mj_getPluginConfig(m, instance, ray_attributes[5]));
+  cfg.baseline = baseline.empty() ? n_step_update : baseline[0];
+
   std::string name =
       std::string(mj_id2name(m, mjOBJ_CAMERA, m->sensor_objid[sensor_id]));
   cfg.cam_name = name;

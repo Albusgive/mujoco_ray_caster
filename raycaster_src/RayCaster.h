@@ -19,12 +19,12 @@ enum RayCasterType { base, yaw, world, none };
 
 class RayCasterCfg {
 public:
-  const mjModel *m;
-  mjData *d;
-  std::string cam_name;
-  mjtNum resolution;
-  std::array<mjtNum, 2> size;
-  std::array<mjtNum, 2> dis_range;
+  const mjModel *m = nullptr;
+  mjData *d = nullptr;
+  std::string cam_name = "";
+  mjtNum resolution = 0.01;
+  std::array<mjtNum, 2> size = {1.0, 1.0};
+  std::array<mjtNum, 2> dis_range = {0.0, 10.0};
   RayCasterType type = RayCasterType::none;
   bool is_detect_parentbody = false;
 };
@@ -32,13 +32,9 @@ public:
 class RayCaster {
 public:
   RayCaster();
-  RayCaster(RayCasterCfg &cfg);
-  RayCaster(const mjModel *m, mjData *d, std::string cam_name,
-            mjtNum resolution, const std::array<mjtNum, 2> &size,
-            const std::array<mjtNum, 2> &dis_range,
-            RayCasterType type = RayCasterType::none,
-            bool is_detect_parentbody = false);
+  RayCaster(const RayCasterCfg &cfg);
   ~RayCaster();
+  void init(const RayCasterCfg &cfg);
   /** @brief 初始化
    * @param m mjModel
    * @param d mjData
@@ -55,10 +51,10 @@ public:
   /** @brief 设置线程数量
    * @param n 线程数量
    */
-  void set_num_thread(int n);
+  virtual void set_num_thread(int n);
 
   /** @brief 计算距离 数值存放在dist中*/
-  void compute_distance();
+  virtual void compute_distance();
 
   /** @brief 绘制测量射线 在mjv_updateScene和mjr_render中间
    * @param scn mjvScene
@@ -135,11 +131,11 @@ public:
   mjtNum deep_min_ratio;
   mjtNum deep_min_ratio_dif;
   mjtNum deep_min_dif;
-  mjtNum *_ray_vec; // h_ray_num * v_ray_num * 3 相对于相机坐标系的偏转
+  mjtNum *_ray_vec;        // h_ray_num * v_ray_num * 3 相对于相机坐标系的偏转
   mjtNum *_ray_vec_offset; // h_ray_num * v_ray_num * 3 相对于相机坐标系的位移
-  mjtNum *ray_vec; // h_ray_num * v_ray_num * 3 世界坐标系下的偏转
-  mjtNum *ray_vec_offset; // h_ray_num * v_ray_num * 3 世界坐标系下的位移
-  int *geomids;           // 命中的geomid
+  mjtNum *ray_vec;         // h_ray_num * v_ray_num * 3 世界坐标系下的偏转
+  mjtNum *ray_vec_offset;  // h_ray_num * v_ray_num * 3 世界坐标系下的位移
+  int *geomids;            // 命中的geomid
   mjtNum *dist_ratio;
   mjtByte geomgroup[8] = {true,  true,  false,
                           false, false, false}; // 检测哪些类型的geom
@@ -179,6 +175,26 @@ public:
   void rotate_vector_with_yaw(mjtNum result[3], mjtNum yaw,
                               const mjtNum vec[3]);
 
+  /// 返回未归一化 distance_to_image_plane 的 std::vector
+  std::vector<double> get_distance_to_image_plane_vec(bool is_noise = false,
+                                                      bool is_inf_max = true);
+
+  /// 返回归一化 distance_to_image_plane 的 std::vector
+  std::vector<double> get_distance_to_image_plane_normalized_vec(
+      bool is_noise = false, bool is_inf_max = true, bool is_inv = false,
+      double scale = 1.0);
+
+  /// distance_to_image_plane 图像化（0~255），行为与 get_image_data 对齐
+  void get_distance_to_image_plane_image(unsigned char *image_data,
+                                         bool is_noise = false,
+                                         bool is_inf_max = true,
+                                         bool is_inv = false);
+
+  /// distance_to_image_plane 图像化 + 反色，行为与 get_inv_image_data 对齐
+  void get_distance_to_image_plane_inv_image(unsigned char *image_data,
+                                             bool is_noise = false,
+                                             bool is_inf_max = true);
+
   // 如果不绘制落点可以关掉提高性能，ray_noise::RayNoise2会自动开启is_compute_hit
   bool is_compute_hit = true;
   bool is_compute_hit_b = true;
@@ -187,7 +203,6 @@ public:
   void compute_hit();
   void compute_hit_b();
 
-private:
   mjThreadPool *pool = nullptr;
   struct RayTaskData {
     RayCaster *instance; // 指向你的类实例
@@ -203,26 +218,12 @@ private:
   }
 
   void compute_ray(int start, int end);
-
-  void draw_ary(int idx, int width, float *color, mjvScene *scn, bool is_scale);
+  
+private:
+  void draw_ray(int idx, int width, float *color, mjvScene *scn, bool is_scale);
 
   mjtNum resolution;
   mjtNum size[2];
-  /** @brief 初始化
-   * @param m mjModel
-   * @param d mjData
-   * @param cam_name 相机名称
-   * @param resolution 分辨率
-   * @param size
-   * 相机朝向方向画面的y,x宽度,world则是世界坐标系下按照图像坐标系排列（左上->右下）
-   * (M) like isaac sim
-   * @param dis_range 距离范围 [最小，最大] (M)
-   * @param is_detect_parentbody 是否检测自身
-   */
-  void init(const mjModel *m, mjData *d, std::string cam_name,
-            mjtNum resolution, const std::array<mjtNum, 2> &size,
-            const std::array<mjtNum, 2> &dis_range, RayCasterType type,
-            bool is_detect_parentbody);
 
   /*-----------模板-----------*/
   template <typename T>
@@ -339,7 +340,7 @@ public:
   }
 
   template <typename T>
-  void get_data(T &data, bool is_inf_max = true, bool is_noise = false) {
+  void get_data(T &data, bool is_noise = false, bool is_inf_max = true) {
     if (is_noise == has_noise) {
       if (is_inf_max) {
         if (sizeof(T) == sizeof(mjtNum))
@@ -378,5 +379,116 @@ public:
   }
   template <typename T> void get_data_pos_b(T &data) {
     _get_data_pos_dim1(data, pos_b);
+  }
+
+  //================ distance_to_image_plane 接口 ================
+  // 未归一化的 distance_to_image_plane（在相机坐标系中直接计算）
+  template <typename T>
+  void get_distance_to_image_plane(T &data, bool is_noise, bool is_inf_max) {
+    for (int idx = 0; idx < nray; idx++) {
+      // 未命中
+      if (geomids[idx] < 0) {
+        if (is_inf_max)
+          data[idx] = deep_max;
+        else
+          data[idx] = 0.0;
+        continue;
+      }
+
+      // 1) 取当前射线在相机坐标系下的方向向量 d =
+      // (_ray_vec_x,_ray_vec_y,_ray_vec_z)
+      const mjtNum dx = _ray_vec[idx * 3 + 0];
+      const mjtNum dy = _ray_vec[idx * 3 + 1];
+      const mjtNum dz = _ray_vec[idx * 3 + 2];
+
+      const mjtNum d_norm = mju_sqrt(dx * dx + dy * dy + dz * dz);
+      if (d_norm < 1e-12) {
+        data[idx] = 0.0;
+        continue;
+      }
+
+      // 2) 选择沿射线的长度 s：带噪声 or 无噪声
+      mjtNum s;
+      if (is_noise == has_noise) {
+        // 使用带噪声的 dist（distance_to_camera）
+        s = dist[idx];
+      } else {
+        // 使用无噪声：dist_ratio * deep_max
+        s = dist_ratio[idx] * deep_max;
+      }
+
+      // 3) 与相机平面法向 (-Z) 的夹角：cosθ = |dz| / ||d||
+      const mjtNum cos_theta = mju_abs(dz) / d_norm;
+
+      // 4) 距离到相机平面 = s * cosθ
+      mjtNum d_plane = s * cos_theta;
+
+      // 可选：限制在 [deep_min, deep_max]
+      if (d_plane < deep_min)
+        d_plane = deep_min;
+      if (d_plane > deep_max)
+        d_plane = deep_max;
+
+      data[idx] = d_plane;
+    }
+  }
+
+  template <typename T>
+  void get_distance_to_image_plane_normalized(T &data, bool is_noise,
+                                              bool is_inf_max, bool is_inv,
+                                              double scale) {
+    for (int idx = 0; idx < nray; idx++) {
+      mjtNum d_plane;
+
+      // 未命中
+      if (geomids[idx] < 0) {
+        if (is_inf_max)
+          d_plane = deep_max;
+        else {
+          data[idx] = 0;
+          continue;
+        }
+      } else {
+        const mjtNum dx = _ray_vec[idx * 3 + 0];
+        const mjtNum dy = _ray_vec[idx * 3 + 1];
+        const mjtNum dz = _ray_vec[idx * 3 + 2];
+
+        const mjtNum d_norm = mju_sqrt(dx * dx + dy * dy + dz * dz);
+        if (d_norm < 1e-12) {
+          data[idx] = 0;
+          continue;
+        }
+
+        mjtNum s;
+        if (is_noise == has_noise) {
+          s = dist[idx];
+        } else {
+          s = dist_ratio[idx] * deep_max;
+        }
+
+        const mjtNum cos_theta = mju_abs(dz) / d_norm;
+        d_plane = s * cos_theta;
+
+        if (d_plane < deep_min)
+          d_plane = deep_min;
+        if (d_plane > deep_max)
+          d_plane = deep_max;
+      }
+
+      if (deep_min_dif <= 0) {
+        data[idx] = 0;
+        continue;
+      }
+
+      mjtNum v;
+      if (is_inv) {
+        // 近 -> 大，远 -> 小
+        v = (1.0 - (d_plane - deep_min) / deep_min_dif) * scale;
+      } else {
+        // 近 -> 小，远 -> 大
+        v = ((d_plane - deep_min) / deep_min_dif) * scale;
+      }
+      data[idx] = v;
+    }
   }
 };
