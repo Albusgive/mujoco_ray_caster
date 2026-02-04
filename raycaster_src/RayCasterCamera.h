@@ -52,6 +52,7 @@ private:
     data->instance->compute_stereo_ray(data->is_left,data->start, data->end);
     return nullptr;
   }
+public:
   void set_num_thread(int n) override;
   void compute_stereo_ray(bool is_left,int start, int end);
   void compute_distance() override;
