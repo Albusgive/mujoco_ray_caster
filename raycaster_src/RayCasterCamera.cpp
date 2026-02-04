@@ -1,5 +1,4 @@
 #include "RayCasterCamera.h"
-#include "plugin/mujoco_ray_caster/raycaster_src/RayCaster.h"
 #include <cmath>
 #include <iostream>
 #include <mujoco/mujoco.h>

@@ -1,5 +1,4 @@
 #include "RayCaster.h"
-#include "engine/engine_util_blas.h"
 #include "mujoco/mjthread.h"
 #include <algorithm>
 #include <cmath>
@@ -9,18 +8,16 @@
 
 RayCaster::RayCaster() {}
 // 构造函数只接受 Cfg
-RayCaster::RayCaster(const RayCasterCfg &cfg) {
-  init(cfg);
-}
-
+RayCaster::RayCaster(const RayCasterCfg &cfg) { init(cfg); }
 
 RayCaster::~RayCaster() {
-  delete[] _ray_vec;
-  delete[] ray_vec;
-  delete[] geomids;
-  delete[] dist;
-  delete[] dist_ratio;
-  mju_threadPoolDestroy(pool);
+  // delete[] _ray_vec;
+  // delete[] ray_vec;
+  // delete[] geomids;
+  // delete[] dist;
+  // delete[] dist_ratio;
+  if (pool != nullptr)
+    mju_threadPoolDestroy(pool);
 }
 
 // init 只接受 Cfg
@@ -415,6 +412,8 @@ void RayCaster::draw_deep(mjvScene *scn, int ratio, int width, float *color) {
 
 void RayCaster::draw_hip_point(mjvScene *scn, int ratio, mjtNum size,
                                float *color) {
+  if (!is_compute_hit)
+    compute_hit();
   float color_[4] = {1.0, 0.0, 0.0, 1.0};
   if (color != nullptr) {
     color_[0] = color[0];
