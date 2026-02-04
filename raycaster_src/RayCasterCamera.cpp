@@ -59,6 +59,7 @@ void RayCasterCamera::set_num_thread(int n) {
   for(const auto& t : ray_task_datas)
   {
     StereoTaskData data;
+    data.instance = this;
     data.is_left = true;
     data.start = t.start;
     data.end = t.end;
