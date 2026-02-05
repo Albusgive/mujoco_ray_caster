@@ -134,9 +134,9 @@ void RayCaster::setNoise(ray_noise::RayNoise3 noise) {
   n.dist = dist;
   n.h_ray_num = h_ray_num;
   n.v_ray_num = v_ray_num;
-  n.get_normal_data = [this](double *data, bool is_inf_max, bool is_inv,
+  n.get_data_normalized = [this](double *data, bool is_inf_max, bool is_inv,
                              double scale) {
-    get_normal_data(data, is_inf_max, is_inv, scale);
+    get_data_normalized(data, is_inf_max, is_inv, scale);
   };
   _noise = new ray_noise::RayNoise3(n);
 }
@@ -269,19 +269,19 @@ void RayCaster::compute_distance() {
 
 void RayCaster::get_inv_image_data(unsigned char *image_data, bool is_noise,
                                    bool is_inf_max) {
-  get_normal_data(image_data, is_noise, is_inf_max, true, 255);
+  get_data_normalized(image_data, is_noise, is_inf_max, true, 255);
 }
 
 void RayCaster::get_image_data(unsigned char *image_data, bool is_noise,
                                bool is_inf_max, bool is_inv) {
-  get_normal_data(image_data, is_noise, is_inf_max, false, 255);
+  get_data_normalized(image_data, is_noise, is_inf_max, false, 255);
 }
 
-std::vector<double> RayCaster::get_normal_data_vec(bool is_noise,
+std::vector<double> RayCaster::get_data_normalized_vec(bool is_noise,
                                                    bool is_inf_max, bool is_inv,
                                                    double scale) {
   std::vector<double> data(nray);
-  get_normal_data(data, is_noise, is_inf_max, is_inv, scale);
+  get_data_normalized(data, is_noise, is_inf_max, is_inv, scale);
   return data;
 }
 

@@ -203,7 +203,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       break;
     case DataType::image:
       sensor_data_list[i].func = [=, this](mjtNum *data) {
-        ray_caster->get_normal_data(data, sensor_data_list[i].is_noise,
+        ray_caster->get_data_normalized(data, sensor_data_list[i].is_noise,
                                     sensor_data_list[i].is_inf_max,
                                     sensor_data_list[i].is_inv, 255.0);
       };
@@ -213,7 +213,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       break;
     case DataType::normal:
       sensor_data_list[i].func = [=, this](mjtNum *data) {
-        ray_caster->get_normal_data(data, sensor_data_list[i].is_noise,
+        ray_caster->get_data_normalized(data, sensor_data_list[i].is_noise,
                                     sensor_data_list[i].is_inf_max,
                                     sensor_data_list[i].is_inv, 1.0);
       };

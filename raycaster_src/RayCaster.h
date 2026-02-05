@@ -156,7 +156,7 @@ public:
   void get_image_data(unsigned char *image_data, bool is_noise = false,
                       bool is_inf_max = true, bool is_inv = false);
 
-  std::vector<double> get_normal_data_vec(bool is_noise,
+  std::vector<double> get_data_normalized_vec(bool is_noise,
                                           bool is_inf_max = false,
                                           bool is_inv = false,
                                           double scale = 1.0);
@@ -228,8 +228,31 @@ private:
   mjtNum size[2];
 
   /*-----------模板-----------*/
+  template <typename T> void _get_data_pos_dim1(T &data, const mjtNum *pos) {
+    for (int i = 0; i < v_ray_num; i++) {
+      for (int j = 0; j < h_ray_num; j++) {
+        int idx = _get_idx(i, j);
+        data[idx * 3] = pos[idx * 3];
+        data[idx * 3 + 1] = pos[idx * 3 + 1];
+        data[idx * 3 + 2] = pos[idx * 3 + 2];
+      }
+    }
+  }
+
+  template <typename T> void _get_data_pos_dim2(T &data, const mjtNum *pos) {
+    for (int i = 0; i < v_ray_num; i++) {
+      for (int j = 0; j < h_ray_num; j++) {
+        int idx = _get_idx(i, j);
+        data[idx][0] = pos[idx * 3];
+        data[idx][1] = pos[idx * 3 + 1];
+        data[idx][2] = pos[idx * 3 + 2];
+      }
+    }
+  }
+
+public:
   template <typename T>
-  void get_normal_data(T &data, bool is_noise, bool is_inf_max, bool is_inv,
+  void get_data_normalized(T &data, bool is_noise, bool is_inf_max, bool is_inv,
                        double scale) {
     for (int idx = 0; idx < nray; idx++) {
       mjtNum distance;
@@ -259,29 +282,6 @@ private:
     }
   }
 
-  template <typename T> void _get_data_pos_dim1(T &data, const mjtNum *pos) {
-    for (int i = 0; i < v_ray_num; i++) {
-      for (int j = 0; j < h_ray_num; j++) {
-        int idx = _get_idx(i, j);
-        data[idx * 3] = pos[idx * 3];
-        data[idx * 3 + 1] = pos[idx * 3 + 1];
-        data[idx * 3 + 2] = pos[idx * 3 + 2];
-      }
-    }
-  }
-
-  template <typename T> void _get_data_pos_dim2(T &data, const mjtNum *pos) {
-    for (int i = 0; i < v_ray_num; i++) {
-      for (int j = 0; j < h_ray_num; j++) {
-        int idx = _get_idx(i, j);
-        data[idx][0] = pos[idx * 3];
-        data[idx][1] = pos[idx * 3 + 1];
-        data[idx][2] = pos[idx * 3 + 2];
-      }
-    }
-  }
-
-public:
   template <typename T>
   void get_data(T &data, bool is_noise = false, bool is_inf_max = true) {
     for (int idx = 0; idx < nray; idx++) {
