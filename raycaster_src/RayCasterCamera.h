@@ -61,5 +61,7 @@ public:
   void set_num_thread(int n) override;
   void compute_stereo_ray(bool is_left, int start, int end);
   void compute_distance() override;
+  #if mjVERSION_HEADER >= 341
   void setNoise(ray_noise::RayNoise4 noise) override{}; //TODO
+  #endif
 };
