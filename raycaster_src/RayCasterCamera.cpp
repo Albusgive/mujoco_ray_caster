@@ -4,9 +4,7 @@
 #include <mujoco/mujoco.h>
 
 RayCasterCamera::RayCasterCamera() {}
-RayCasterCamera::RayCasterCamera(const RayCasterCameraCfg &cfg) {
-  init(cfg);
-}
+RayCasterCamera::RayCasterCamera(const RayCasterCameraCfg &cfg) { init(cfg); }
 RayCasterCamera::~RayCasterCamera() {
   // 资源释放由基类析构函数处理
 }
@@ -15,7 +13,7 @@ void RayCasterCamera::init(const RayCasterCameraCfg &cfg) {
   this->focal_length = cfg.focal_length;
   this->horizontal_aperture = cfg.horizontal_aperture;
   this->vertical_aperture = cfg.vertical_aperture;
-  
+
   // 计算相机参数
   if (this->vertical_aperture == 0) {
     this->aspect_ratio = (double)cfg.h_ray_num / (double)cfg.v_ray_num;
@@ -24,12 +22,18 @@ void RayCasterCamera::init(const RayCasterCameraCfg &cfg) {
     this->aspect_ratio = this->horizontal_aperture / this->vertical_aperture;
   }
   this->h_pixel_size = this->horizontal_aperture / cfg.h_ray_num;
-  this->v_pixel_size = (this->horizontal_aperture / this->aspect_ratio) / cfg.v_ray_num;
-  
+  this->v_pixel_size =
+      (this->horizontal_aperture / this->aspect_ratio) / cfg.v_ray_num;
+
   if (this->baseline > 0.0)
     is_compute_hit = true;
   // 调用基类的 protected 初始化函数
-  _init(cfg.m, cfg.d, cfg.cam_name, cfg.h_ray_num, cfg.v_ray_num, cfg.dis_range, cfg.is_detect_parentbody);
+  _init(cfg.m, cfg.d, cfg.cam_name, cfg.h_ray_num, cfg.v_ray_num, cfg.dis_range,
+        cfg.is_detect_parentbody);
+#if mjVERSION_HEADER >= 341
+  left_ray_normal = new mjtNum[h_ray_num * v_ray_num * 3];
+  right_ray_normal = new mjtNum[h_ray_num * v_ray_num * 3];
+#endif
 }
 
 void RayCasterCamera::compute_ray_vec_virtual_plane() {
@@ -56,8 +60,7 @@ void RayCasterCamera::compute_ray_vec_virtual_plane() {
 void RayCasterCamera::set_num_thread(int n) {
   RayCaster::set_num_thread(n);
   stereo_task_datas.clear();
-  for(const auto& t : ray_task_datas)
-  {
+  for (const auto &t : ray_task_datas) {
     StereoTaskData data;
     data.instance = this;
     data.is_left = true;
@@ -87,8 +90,19 @@ void RayCasterCamera::compute_stereo_ray(bool is_left, int start, int end) {
       continue;
     }
     mju_sub3(stereo_ray, pos_w + idx * 3, pnt);
+
+#if mjVERSION_HEADER >= 341
+    mjtNum ratio = 0.0;
+    if (is_left)
+      ratio = mj_ray(m, d, pnt, stereo_ray, geomgroup, 1, no_detect_body_id,
+                     geomid, left_ray_normal + idx * 3);
+    else
+      ratio = mj_ray(m, d, pnt, stereo_ray, geomgroup, 1, no_detect_body_id,
+                     geomid, right_ray_normal + idx * 3);
+#else
     mjtNum ratio =
         mj_ray(m, d, pnt, stereo_ray, geomgroup, 1, no_detect_body_id, geomid);
+#endif
     bool is_valid = (geomid[0] != -1) && (geomid[0] == geomids[idx]) &&
                     (ratio >= 0.9999 && ratio <= 1.0001);
     if (!is_valid) {

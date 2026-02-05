@@ -5,6 +5,7 @@
 #include <chrono>
 #include <vector>
 #include <type_traits>
+#include "mujoco/mjtnum.h"
 
 namespace std_noise {
 
@@ -23,10 +24,8 @@ public:
   }
 
   //produce_noise为一般噪声制造
-  virtual void produce_noise(float &data) {
-  }
   
-  virtual void produce_noise(double &data) {
+  virtual void produce_noise(mjtNum &data) {
   }
 
   template <typename T>
@@ -71,12 +70,9 @@ public:
     dist = Distribution(std::forward<Args>(args)...);
   }
 
-  void produce_noise(float &data) override {
-    data += static_cast<float>(dist(gen));
-  }
 
-  void produce_noise(double &data) override {
-    data += static_cast<double>(dist(gen));
+  void produce_noise(mjtNum &data) override {
+    data += static_cast<mjtNum>(dist(gen));
   }
 
 protected:
@@ -84,51 +80,51 @@ protected:
 };
 
 // 高斯噪声
-class GaussianNoise : public DistributionNoise<std::normal_distribution<double>> {
+class GaussianNoise : public DistributionNoise<std::normal_distribution<mjtNum>> {
 public:
-  GaussianNoise(double mean = 0.0, double stddev = 1.0, unsigned int seed = 0) 
+  GaussianNoise(mjtNum mean = 0.0, mjtNum stddev = 1.0, unsigned int seed = 0) 
       : DistributionNoise(mean, stddev) {
     if (seed != 0) {
       set_seed(seed);
     }
   }
 
-  double get_mean() const { return dist.mean(); }
-  double get_stddev() const { return dist.stddev(); }
-  void set_params(double mean, double stddev) {
-    dist = std::normal_distribution<double>(mean, stddev);
+  mjtNum get_mean() const { return dist.mean(); }
+  mjtNum get_stddev() const { return dist.stddev(); }
+  void set_params(mjtNum mean, mjtNum stddev) {
+    dist = std::normal_distribution<mjtNum>(mean, stddev);
   }
 };
 
 // 均匀分布噪声
-class UniformNoise : public DistributionNoise<std::uniform_real_distribution<double>> {
+class UniformNoise : public DistributionNoise<std::uniform_real_distribution<mjtNum>> {
 public:
-  UniformNoise(double low = 0.0, double high = 1.0, unsigned int seed = 0) 
+  UniformNoise(mjtNum low = 0.0, mjtNum high = 1.0, unsigned int seed = 0) 
       : DistributionNoise(low, high) {
     if (seed != 0) {
       set_seed(seed);
     }
   }
 
-  double get_low() const { return dist.a(); }
-  double get_high() const { return dist.b(); }
-  void set_params(double low, double high) {
-    dist = std::uniform_real_distribution<double>(low, high);
+  mjtNum get_low() const { return dist.a(); }
+  mjtNum get_high() const { return dist.b(); }
+  void set_params(mjtNum low, mjtNum high) {
+    dist = std::uniform_real_distribution<mjtNum>(low, high);
   }
 };
 
 // 泊松噪声
 class PoissonNoise : public DistributionNoise<std::poisson_distribution<int>> {
 public:
-  PoissonNoise(double mean = 1.0, unsigned int seed = 0) 
+  PoissonNoise(mjtNum mean = 1.0, unsigned int seed = 0) 
       : DistributionNoise(mean) {
     if (seed != 0) {
       set_seed(seed);
     }
   }
 
-  double get_mean() const { return dist.mean(); }
-  void set_mean(double mean) {
+  mjtNum get_mean() const { return dist.mean(); }
+  void set_mean(mjtNum mean) {
     dist = std::poisson_distribution<int>(mean);
   }
 };

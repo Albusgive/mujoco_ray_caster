@@ -109,6 +109,10 @@ public:
 
   static int get_nray(RayCasterCfg &cfg);
   void setNoise(ray_noise::RayNoise2 noise);
+#if mjVERSION_HEADER >= 341
+  void setNoise(ray_noise::RayNoise3 noise);
+  virtual void setNoise(ray_noise::RayNoise4 noise){};
+#endif
 
   ray_noise::Noise *_noise;
 
@@ -134,12 +138,16 @@ public:
   mjtNum *ray_vec;         // h_ray_num * v_ray_num * 3 世界坐标系下的偏转
   mjtNum *ray_vec_offset;  // h_ray_num * v_ray_num * 3 世界坐标系下的位移
   int *geomids;            // 命中的geomid
+  bool *is_lost;           // 是否丢失射线
   mjtNum *dist_ratio;
   mjtByte geomgroup[8] = {true,  true,  false,
                           false, false, false}; // 检测哪些类型的geom
   bool is_offert = true;
   RayCasterType type = RayCasterType::none;
   int num_thread = 0;
+#if mjVERSION_HEADER >= 341
+  mjtNum *ray_normal; // 射线法线
+#endif
 
   int _get_idx(int h, int v);
   // 将ray从相机坐标系转换到世界坐标系
@@ -155,9 +163,9 @@ public:
                       bool is_inf_max = true, bool is_inv = false);
 
   std::vector<double> get_data_normalized_vec(bool is_noise,
-                                          bool is_inf_max = false,
-                                          bool is_inv = false,
-                                          double scale = 1.0);
+                                              bool is_inf_max = false,
+                                              bool is_inv = false,
+                                              double scale = 1.0);
 
   // 直接测量距离信息
   std::vector<double> get_data_vec(bool is_inf_max = true);
@@ -251,8 +259,12 @@ private:
 public:
   template <typename T>
   void get_data_normalized(T &data, bool is_noise, bool is_inf_max, bool is_inv,
-                       double scale) {
+                           double scale) {
     for (int idx = 0; idx < nray; idx++) {
+      if (is_lost[idx]) {
+        data[idx] = 0.0;
+        continue;
+      }
       mjtNum distance;
       // 未命中
       if (geomids[idx] < 0) {
@@ -283,6 +295,10 @@ public:
   template <typename T>
   void get_data(T &data, bool is_noise = false, bool is_inf_max = true) {
     for (int idx = 0; idx < nray; idx++) {
+      if (is_lost[idx]) {
+        data[idx] = 0.0;
+        continue;
+      }
       // 未命中
       if (geomids[idx] < 0) {
         if (is_inf_max)
@@ -314,6 +330,10 @@ public:
   template <typename T>
   void get_distance_to_image_plane(T &data, bool is_noise, bool is_inf_max) {
     for (int idx = 0; idx < nray; idx++) {
+      if (is_lost[idx]) {
+        data[idx] = 0.0;
+        continue;
+      }
       // 未命中
       if (geomids[idx] < 0) {
         if (is_inf_max)
@@ -366,8 +386,11 @@ public:
                                               bool is_inf_max, bool is_inv,
                                               double scale) {
     for (int idx = 0; idx < nray; idx++) {
+      if (is_lost[idx]) {
+        data[idx] = 0.0;
+        continue;
+      }
       mjtNum d_plane;
-
       // 未命中
       if (geomids[idx] < 0) {
         if (is_inf_max)

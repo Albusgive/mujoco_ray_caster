@@ -6,6 +6,6 @@ demo/C++/
 log/
 demo/ROS2/C++/build/
 demo/ROS2/colcon/
-lib/libsensor_ray.so
+lib/
 build/
-lib/libsensor_ray.so
+

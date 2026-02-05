@@ -7,7 +7,6 @@
 #include <utility>
 
 RayCaster::RayCaster() {}
-// 构造函数只接受 Cfg
 RayCaster::RayCaster(const RayCasterCfg &cfg) { init(cfg); }
 
 RayCaster::~RayCaster() {
@@ -75,6 +74,10 @@ void RayCaster::_init(const mjModel *m, mjData *d, std::string cam_name,
   geomids = new int[h_ray_num * v_ray_num];
   dist = new mjtNum[h_ray_num * v_ray_num];
   dist_ratio = new mjtNum[h_ray_num * v_ray_num];
+  is_lost = new bool[h_ray_num * v_ray_num];
+#if mjVERSION_HEADER >= 341
+  ray_normal = new mjtNum[h_ray_num * v_ray_num * 3];
+#endif
 
   _noise = new ray_noise::Noise;
   create_rays();
@@ -126,6 +129,19 @@ void RayCaster::setNoise(ray_noise::RayNoise2 noise) {
   _noise = new ray_noise::RayNoise2(n);
   has_noise = true;
 }
+
+#if mjVERSION_HEADER >= 341
+void RayCaster::setNoise(ray_noise::RayNoise3 noise) {
+  delete _noise;
+  auto n = ray_noise::RayNoise3(noise);
+  n.is_lost = is_lost;
+  n.nray = nray;
+  n.ray_vec = ray_vec;
+  n.ray_normal = ray_normal;
+  _noise = new ray_noise::RayNoise3(n);
+  has_noise = true;
+}
+#endif
 
 void RayCaster::compute_ray_vec() {
   if (is_offert) {
@@ -202,9 +218,15 @@ void RayCaster::compute_ray(int start, int end) {
       pnt[1] += ray_vec_offset[i * 3 + 1];
       pnt[2] += ray_vec_offset[i * 3 + 2];
     }
+#if mjVERSION_HEADER >= 341
+    dist_ratio[i] = mj_ray(m, d, pnt, ray_vec + i * 3, geomgroup, 1,
+                           no_detect_body_id, geomid, ray_normal + i * 3);
+#else
     dist_ratio[i] = mj_ray(m, d, pnt, ray_vec + i * 3, geomgroup, 1,
                            no_detect_body_id, geomid);
+#endif
     geomids[i] = geomid[0];
+    is_lost[i] = false;
     if (geomid[0] == -1) {
       dist_ratio[i] = 1;
     } else if (dist_ratio[i] > 1) {
@@ -263,8 +285,9 @@ void RayCaster::get_image_data(unsigned char *image_data, bool is_noise,
 }
 
 std::vector<double> RayCaster::get_data_normalized_vec(bool is_noise,
-                                                   bool is_inf_max, bool is_inv,
-                                                   double scale) {
+                                                       bool is_inf_max,
+                                                       bool is_inv,
+                                                       double scale) {
   std::vector<double> data(nray);
   get_data_normalized(data, is_noise, is_inf_max, is_inv, scale);
   return data;

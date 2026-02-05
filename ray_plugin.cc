@@ -1,3 +1,8 @@
+#if __cplusplus >= 202002L
+    #define RAY_LAMBDA_CAPTURE [=, this]
+#else
+    #define RAY_LAMBDA_CAPTURE [=]
+#endif
 #include "ray_plugin.h"
 #include "engine/engine_name.h"
 #include "engine/engine_util_errmem.h"
@@ -193,7 +198,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
   for (int i = 0; i < n_sensor_data; i++) {
     switch (sensor_data_list[i].type) {
     case DataType::data:
-      sensor_data_list[i].func = [=, this](mjtNum *data) {
+      sensor_data_list[i].func = RAY_LAMBDA_CAPTURE(mjtNum *data) {
         ray_caster->get_data(data, sensor_data_list[i].is_noise,
                              sensor_data_list[i].is_inf_max);
       };
@@ -202,7 +207,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray;
       break;
     case DataType::image:
-      sensor_data_list[i].func = [=, this](mjtNum *data) {
+      sensor_data_list[i].func = RAY_LAMBDA_CAPTURE(mjtNum *data) {
         ray_caster->get_data_normalized(data, sensor_data_list[i].is_noise,
                                     sensor_data_list[i].is_inf_max,
                                     sensor_data_list[i].is_inv, 255.0);
@@ -212,7 +217,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray;
       break;
     case DataType::normal:
-      sensor_data_list[i].func = [=, this](mjtNum *data) {
+      sensor_data_list[i].func = RAY_LAMBDA_CAPTURE(mjtNum *data) {
         ray_caster->get_data_normalized(data, sensor_data_list[i].is_noise,
                                     sensor_data_list[i].is_inf_max,
                                     sensor_data_list[i].is_inv, 1.0);
@@ -222,7 +227,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray;
       break;
     case DataType::distance_to_image_plane:
-      sensor_data_list[i].func = [=, this](mjtNum *data) {
+      sensor_data_list[i].func = RAY_LAMBDA_CAPTURE(mjtNum *data) {
         ray_caster->get_distance_to_image_plane(
             data, sensor_data_list[i].is_noise, sensor_data_list[i].is_inf_max);
       };
@@ -231,7 +236,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray;
       break;
     case DataType::image_plane_image:
-      sensor_data_list[i].func = [=, this](mjtNum *data) {
+      sensor_data_list[i].func = RAY_LAMBDA_CAPTURE(mjtNum *data) {
         ray_caster->get_distance_to_image_plane_normalized(
             data, sensor_data_list[i].is_noise, sensor_data_list[i].is_inf_max,
             sensor_data_list[i].is_inv, 255.0);
@@ -241,7 +246,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray;
       break;
     case DataType::image_plane_normal:
-      sensor_data_list[i].func = [=, this](mjtNum *data) {
+      sensor_data_list[i].func = RAY_LAMBDA_CAPTURE(mjtNum *data) {
         ray_caster->get_distance_to_image_plane_normalized(
             data, sensor_data_list[i].is_noise, sensor_data_list[i].is_inf_max,
             sensor_data_list[i].is_inv, 1.0);
@@ -251,7 +256,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray;
       break;
     case DataType::pos_w:
-      sensor_data_list[i].func = [=, this](mjtNum *data) {
+      sensor_data_list[i].func = RAY_LAMBDA_CAPTURE(mjtNum *data) {
         ray_caster->get_data_pos_w(data);
       };
       sensor_data_list[i].data_point = data_pos;
@@ -259,7 +264,7 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
       data_pos += nray * 3;
       break;
     case DataType::pos_b:
-      sensor_data_list[i].func = [=, this](mjtNum *data) {
+      sensor_data_list[i].func = RAY_LAMBDA_CAPTURE(mjtNum *data) {
         ray_caster->get_data_pos_b(data);
       };
       sensor_data_list[i].data_point = data_pos;
