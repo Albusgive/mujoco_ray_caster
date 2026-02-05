@@ -169,7 +169,7 @@ private:
   }
 };
 
-class RayNoise3 : public Noise {
+class RayNoise3 : public std_noise::Noise {
 public:
   RayNoise3(double max_incidence_angle_deg) {
     if (max_incidence_angle_deg < 0)
@@ -200,7 +200,7 @@ public:
   };
 };
 
-class RayNoise4 : public Noise {
+class RayNoise4 : public std_noise::Noise {
   // only stereo camera TODO
 public:
   RayNoise4() {
