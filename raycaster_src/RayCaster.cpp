@@ -221,7 +221,7 @@ void RayCaster::compute_ray(int start, int end) {
                            no_detect_body_id, geomid);
     geomids[i] = geomid[0];
     if (geomid[0] == -1) {
-      dist_ratio[i] = 0;
+      dist_ratio[i] = 1;
     } else if (dist_ratio[i] > 1) {
       dist_ratio[i] = 1;
     } else if (dist_ratio[i] < deep_min_ratio) {

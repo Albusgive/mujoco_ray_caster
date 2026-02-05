@@ -156,8 +156,10 @@ public:
   void get_image_data(unsigned char *image_data, bool is_noise = false,
                       bool is_inf_max = true, bool is_inv = false);
 
-  std::vector<double> get_normal_data_vec(bool is_noise, bool is_inf_max,
-                                          bool is_inv, double scale = 1.0);
+  std::vector<double> get_normal_data_vec(bool is_noise,
+                                          bool is_inf_max = false,
+                                          bool is_inv = false,
+                                          double scale = 1.0);
 
   // 直接测量距离信息
   std::vector<double> get_data_vec(bool is_inf_max = true);
@@ -218,7 +220,7 @@ public:
   }
 
   void compute_ray(int start, int end);
-  
+
 private:
   void draw_ray(int idx, int width, float *color, mjvScene *scn, bool is_scale);
 
@@ -227,81 +229,32 @@ private:
 
   /*-----------模板-----------*/
   template <typename T>
-  void _get_normal_data(T &data, bool is_inf_max, bool is_inv, double scale) {
-    if (is_inv) {
-      if (is_inf_max) {
-        for (int idx = 0; idx < nray; idx++) {
-          if (dist[idx] == 0)
-            data[idx] = 0;
-          else
-            data[idx] = (1 - (dist[idx] - deep_min) / deep_min_dif) * scale;
+  void get_normal_data(T &data, bool is_noise, bool is_inf_max, bool is_inv,
+                       double scale) {
+    for (int idx = 0; idx < nray; idx++) {
+      mjtNum distance;
+      // 未命中
+      if (geomids[idx] < 0) {
+        if (is_inf_max)
+          distance = deep_max;
+        else {
+          data[idx] = 0;
+          continue;
         }
       } else {
-        for (int idx = 0; idx < v_ray_num; idx++) {
-          if (geomids[idx] < 0)
-            data[idx] = 0;
-          else if (dist[idx] == 0)
-            data[idx] = 0;
-          else
-            data[idx] = (1 - (dist[idx] - deep_min) / deep_min_dif) * scale;
+        // 命中
+        if (is_noise == has_noise) {
+          distance = dist[idx];
+        } else {
+          distance = dist_ratio[idx] * deep_max;
         }
       }
-    } else {
-      if (is_inf_max) {
-        for (int idx = 0; idx < nray; idx++) {
-          if (dist[idx] == 0)
-            data[idx] = 0;
-          else
-            data[idx] = ((dist[idx] - deep_min) / deep_min_dif) * scale;
-        }
+      if (is_inv) {
+        // 近 -> 大，远 -> 小
+        data[idx] = (1.0 - (distance - deep_min) / deep_min_dif) * scale;
       } else {
-        for (int idx = 0; idx < v_ray_num; idx++) {
-          if (geomids[idx] < 0)
-            data[idx] = 0;
-          else if (dist[idx] == 0)
-            data[idx] = 0;
-          else
-            data[idx] = ((dist[idx] - deep_min) / deep_min_dif) * scale;
-        }
-      }
-    }
-  }
-
-  template <typename T>
-  void _get_normal_data_from_ratio(T &data, bool is_inf_max, bool is_inv,
-                                   double scale) {
-    if (is_inv) {
-      if (is_inf_max) {
-        for (int idx = 0; idx < nray; idx++) {
-          data[idx] =
-              (1 - (dist_ratio[idx] - deep_min_ratio) / deep_min_ratio_dif) *
-              scale;
-        }
-      } else {
-        for (int idx = 0; idx < v_ray_num; idx++) {
-          if (geomids[idx] < 0)
-            data[idx] = 0;
-          else
-            data[idx] =
-                (1 - (dist_ratio[idx] - deep_min_ratio) / deep_min_ratio_dif) *
-                scale;
-        }
-      }
-    } else {
-      if (is_inf_max) {
-        for (int idx = 0; idx < nray; idx++) {
-          data[idx] =
-              ((dist_ratio[idx] - deep_min_ratio) / deep_min_ratio_dif) * scale;
-        }
-      } else {
-        for (int idx = 0; idx < v_ray_num; idx++) {
-          if (geomids[idx] < 0)
-            data[idx] = 0;
-          else
-            data[idx] =
-                ((dist_ratio[idx] - deep_min_ratio) / deep_min_ratio_dif) *
-                scale;
-        }
+        // 近 -> 小，远 -> 大
+        data[idx] = ((distance - deep_min) / deep_min_dif) * scale;
       }
     }
   }
@@ -330,45 +283,22 @@ private:
 
 public:
   template <typename T>
-  void get_normal_data(T &data, bool is_noise, bool is_inf_max, bool is_inv,
-                       double scale) {
-    if (!is_noise) {
-      _get_normal_data_from_ratio(data, is_inf_max, is_inv, scale);
-    } else {
-      _get_normal_data(data, is_inf_max, is_inv, scale);
-    }
-  }
-
-  template <typename T>
   void get_data(T &data, bool is_noise = false, bool is_inf_max = true) {
-    if (is_noise == has_noise) {
-      if (is_inf_max) {
-        if (sizeof(T) == sizeof(mjtNum))
-          memcpy(data, dist, nray * sizeof(double));
-        else {
-          for (int i = 0; i < nray; i++) {
-            data[i] = dist[i];
-          }
-        }
+    for (int idx = 0; idx < nray; idx++) {
+      // 未命中
+      if (geomids[idx] < 0) {
+        if (is_inf_max)
+          data[idx] = deep_max;
+        else
+          data[idx] = 0.0;
+        continue;
       } else {
-        for (int i = 0; i < nray; i++) {
-          if (geomids[i] < 0)
-            data[i] = 0.0;
-          else
-            data[i] = dist[i];
-        }
-      }
-    } else {
-      if (is_inf_max) {
-        for (int i = 0; i < nray; i++) {
-          data[i] = dist_ratio[i] * deep_max;
-        }
-      } else {
-        for (int i = 0; i < nray; i++) {
-          if (geomids[i] < 0)
-            data[i] = 0.0;
-          else
-            data[i] = dist_ratio[i] * deep_max;
+        if (is_noise == has_noise) {
+          // 使用带噪声的 dist（distance_to_camera）
+          data[idx] = dist[idx];
+        } else {
+          // 使用无噪声：dist_ratio * deep_max
+          data[idx] = dist_ratio[idx] * deep_max;
         }
       }
     }
@@ -473,11 +403,6 @@ public:
           d_plane = deep_min;
         if (d_plane > deep_max)
           d_plane = deep_max;
-      }
-
-      if (deep_min_dif <= 0) {
-        data[idx] = 0;
-        continue;
       }
 
       mjtNum v;
