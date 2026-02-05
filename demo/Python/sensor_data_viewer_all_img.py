@@ -3,7 +3,7 @@ import mujoco_viewer
 import cv2
 import numpy as np
 
-mujoco.mj_loadPluginLibrary('../../lib/libsensor_ray.so')
+mujoco.mj_loadPluginLibrary('../../lib/libsensor_raycaster.so')
 
 m = mujoco.MjModel.from_xml_path("../../model/ray_caster3.xml")
 d = mujoco.MjData(m)
