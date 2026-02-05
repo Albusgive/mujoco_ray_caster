@@ -127,21 +127,6 @@ void RayCaster::setNoise(ray_noise::RayNoise2 noise) {
   has_noise = true;
 }
 
-#ifdef USE_OPENCV
-void RayCaster::setNoise(ray_noise::RayNoise3 noise) {
-  delete _noise;
-  auto n = ray_noise::RayNoise3(noise);
-  n.dist = dist;
-  n.h_ray_num = h_ray_num;
-  n.v_ray_num = v_ray_num;
-  n.get_data_normalized = [this](double *data, bool is_inf_max, bool is_inv,
-                             double scale) {
-    get_data_normalized(data, is_inf_max, is_inv, scale);
-  };
-  _noise = new ray_noise::RayNoise3(n);
-}
-#endif
-
 void RayCaster::compute_ray_vec() {
   if (is_offert) {
     yaw = atan2(mat[3], mat[0]);

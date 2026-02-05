@@ -109,9 +109,7 @@ public:
 
   static int get_nray(RayCasterCfg &cfg);
   void setNoise(ray_noise::RayNoise2 noise);
-#ifdef USE_OPENCV
-  void setNoise(ray_noise::RayNoise3 noise);
-#endif
+
   ray_noise::Noise *_noise;
 
   mjtNum *dist;               // 距离 h_ray_num * v_ray_num
