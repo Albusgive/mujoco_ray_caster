@@ -1,5 +1,5 @@
 #pragma once
-
+#include <sstream>
 #include <array>
 #include <functional>
 #include <optional>
