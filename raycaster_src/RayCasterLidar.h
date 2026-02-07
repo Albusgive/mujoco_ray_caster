@@ -15,6 +15,7 @@ public:
   int v_ray_num = 16;
   std::array<mjtNum, 2> dis_range = {0.1, 100.0};
   bool is_detect_self = false;
+  mjtNum loss_angle=0.0;
 };
 
 class RayCasterLidar : public RayCaster {

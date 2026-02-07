@@ -1,5 +1,7 @@
 #include "RayCaster.h"
+#include "engine/engine_util_errmem.h"
 #include "mujoco/mjthread.h"
+#include "mujoco/mjtnum.h"
 #include <algorithm>
 #include <cmath>
 #include <iterator>
@@ -30,13 +32,13 @@ void RayCaster::init(const RayCasterCfg &cfg) {
   int v_num = (int)(this->size[1] / resolution) + 1;
   // 调用内部保护的 _init 进行内存分配
   _init(cfg.m, cfg.d, cfg.cam_name, h_num, v_num, cfg.dis_range,
-        cfg.is_detect_parentbody);
+        cfg.is_detect_parentbody, cfg.loss_angle);
 }
 
 void RayCaster::_init(const mjModel *m, mjData *d, std::string cam_name,
                       int h_ray_num, int v_ray_num,
                       const std::array<mjtNum, 2> &dis_range,
-                      bool is_detect_parentbody) {
+                      bool is_detect_parentbody, mjtNum loss_angle) {
   this->m = m;
   this->d = d;
   this->cam_id = mj_name2id(m, mjOBJ_CAMERA, cam_name.c_str());
@@ -78,6 +80,7 @@ void RayCaster::_init(const mjModel *m, mjData *d, std::string cam_name,
 #if mjVERSION_HEADER >= 341
   ray_normal = new mjtNum[h_ray_num * v_ray_num * 3];
 #endif
+  set_lossangle(loss_angle);
 
   _noise = new ray_noise::Noise;
   create_rays();
@@ -98,6 +101,22 @@ void RayCaster::set_num_thread(int n) {
     rd.start = i * nray / (num_thread + 1);
     rd.end = idx;
     ray_task_datas[i - 1] = rd;
+  }
+}
+
+void RayCaster::set_lossangle(mjtNum loss_angle) {
+  if (loss_angle == 0.0)
+    return;
+  if (loss_angle < 0 || loss_angle > 180) {
+    mju_error("loss_angle must betwon in (0,180)");
+    return;
+  }
+  this->loss_angle = loss_angle;
+  this->loss_angle_cos = mju_cos(loss_angle * M_PI / 180);
+  is_loss_angle = true;
+  if (loss_angle > 0.0 && mjVERSION_HEADER < 341) {
+    is_loss_angle = false;
+    mju_warning("mujoco_version < 3.4.1,loss_angle is unable.");
   }
 }
 
@@ -241,6 +260,7 @@ void RayCaster::compute_ray(int start, int end) {
     } else if (dist[i] < deep_min) {
       dist[i] = deep_min;
     }
+    compute_loss_ray(i);
   }
 }
 
@@ -326,6 +346,14 @@ void RayCaster::draw_line(mjvScene *scn, mjtNum *from, mjtNum *to, mjtNum width,
   mjvGeom *geom = scn->geoms + scn->ngeom - 1;
   mjv_initGeom(geom, mjGEOM_SPHERE, NULL, NULL, NULL, rgba);
   mjv_connector(geom, mjGEOM_LINE, width, from, to);
+}
+
+void RayCaster::draw_arrow(mjvScene *scn, mjtNum *from, mjtNum *to,
+                           mjtNum width, float *rgba) {
+  scn->ngeom += 1;
+  mjvGeom *geom = scn->geoms + scn->ngeom - 1;
+  mjv_initGeom(geom, mjGEOM_SPHERE, NULL, NULL, NULL, rgba);
+  mjv_connector(geom, mjGEOM_ARROW, width, from, to);
 }
 
 void RayCaster::draw_geom(mjvScene *scn, int type, mjtNum *size, mjtNum *pos,
@@ -420,8 +448,11 @@ void RayCaster::draw_deep(mjvScene *scn, int ratio, int width, float *color) {
 
 void RayCaster::draw_hip_point(mjvScene *scn, int ratio, mjtNum size,
                                float *color) {
-  if (!is_compute_hit)
+  if (!is_compute_hit) {
+    is_compute_hit = true;
     compute_hit();
+  }
+
   float color_[4] = {1.0, 0.0, 0.0, 1.0};
   if (color != nullptr) {
     color_[0] = color[0];
@@ -439,6 +470,32 @@ void RayCaster::draw_hip_point(mjvScene *scn, int ratio, mjtNum size,
       draw_geom(scn, mjGEOM_SPHERE, size_, pos_w + (idx * 3), mat, color_);
     }
   }
+}
+
+void RayCaster::draw_normal(mjvScene *scn, int ratio, int width, float *color) {
+#if mjVERSION_HEADER >= 341
+  if (!is_compute_hit) {
+    is_compute_hit = true;
+    compute_hit();
+  }
+  float color_[4] = {1.0, 0.0, 0.0, 1.0};
+  if (color != nullptr) {
+    color_[0] = color[0];
+    color_[1] = color[1];
+    color_[2] = color[2];
+    color_[3] = color[3];
+  }
+  mjtNum end[3] = {0, 0, 0};
+  for (int i = 0; i < v_ray_num; i += ratio) {
+    for (int j = 0; j < h_ray_num; j += ratio) {
+      int idx = _get_idx(i, j);
+      if (std::isnan(pos_w[idx * 3]))
+        continue;
+      mju_add3(end, ray_normal+ (idx * 3), pos_w + (idx * 3));
+      draw_arrow(scn, pos_w + (idx * 3), end, width*0.001, color_);
+    }
+  }
+#endif
 }
 
 void RayCaster::rotate_vector_with_yaw(mjtNum result[3], mjtNum yaw,

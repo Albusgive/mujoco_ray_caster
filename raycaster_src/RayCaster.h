@@ -27,6 +27,7 @@ public:
   std::array<mjtNum, 2> dis_range = {0.0, 10.0};
   RayCasterType type = RayCasterType::none;
   bool is_detect_parentbody = false;
+  mjtNum loss_angle = 0.0;
 };
 
 class RayCaster {
@@ -46,12 +47,16 @@ public:
    */
   void _init(const mjModel *m, mjData *d, std::string cam_name, int h_ray_num,
              int v_ray_num, const std::array<mjtNum, 2> &dis_range,
-             bool is_detect_parentbody);
+             bool is_detect_parentbody, mjtNum loss_angle = 0.0);
 
   /** @brief 设置线程数量
    * @param n 线程数量
    */
   virtual void set_num_thread(int n);
+  /** @brief ldm反射到stereo_camera的光路法线和物体表面法线相差角度，(0,90)
+   * @param n 射线丢失角度
+   */
+  void set_lossangle(mjtNum loss_angle);
 
   /** @brief 计算距离 数值存放在dist中*/
   virtual void compute_distance();
@@ -90,6 +95,14 @@ public:
    */
   void draw_hip_point(mjvScene *scn, int ratio, mjtNum size = 0.1,
                       float *color = nullptr);
+  /** @brief 绘制法向量 在mjv_updateScene和mjr_render中间
+   * @param scn mjvScene
+   * @param ratio 绘制比例
+   * @param width 法向量宽度
+   * @param color 颜色
+   */
+  void draw_normal(mjvScene *scn, int ratio, int width = 5,
+                   float *color = nullptr);
 
   /** @brief 获取dist中索引
   * @param h 水平索引
@@ -111,7 +124,6 @@ public:
   void setNoise(ray_noise::RayNoise2 noise);
 #if mjVERSION_HEADER >= 341
   void setNoise(ray_noise::RayNoise3 noise);
-  virtual void setNoise(ray_noise::RayNoise4 noise){};
 #endif
 
   ray_noise::Noise *_noise;
@@ -145,8 +157,30 @@ public:
   bool is_offert = true;
   RayCasterType type = RayCasterType::none;
   int num_thread = 0;
+
 #if mjVERSION_HEADER >= 341
   mjtNum *ray_normal; // 射线法线
+#endif
+  mjtNum loss_angle = 0.0;
+  mjtNum loss_angle_cos = 0.0; // 角度cos小于stereo_loss_angle_cos
+  bool is_loss_angle = false;
+#if mjVERSION_HEADER >= 341
+  virtual void compute_loss_ray(int idx) {
+    if (is_loss_angle)
+    {
+      const mjtNum *ray_ptr = ray_vec + idx * 3;
+      mjtNum L[3] = {-ray_ptr[0], -ray_ptr[1], -ray_ptr[2]};
+      mjtNum cos_light = mju_dot3(ray_normal, L);
+      mju_normalize3(L);
+      if (cos_light < loss_angle_cos) {
+        pos_w[idx * 3] = pos_w[idx * 3 + 1] = pos_w[idx * 3 + 2] = NAN;
+        dist[idx] = 0;
+        dist_ratio[idx] = 0;
+      }
+    }
+  };
+#else
+  virtual void compute_loss_ray(int idx) {}
 #endif
 
   int _get_idx(int h, int v);
@@ -176,6 +210,8 @@ public:
   std::vector<std::vector<double>> get_data_pos_b();
 
   void draw_line(mjvScene *scn, mjtNum *from, mjtNum *to, mjtNum width,
+                 float *rgba);
+  void draw_arrow(mjvScene *scn, mjtNum *from, mjtNum *to, mjtNum width,
                  float *rgba);
   void draw_geom(mjvScene *scn, int type, mjtNum *size, mjtNum *pos,
                  mjtNum *mat, float rgba[4]);

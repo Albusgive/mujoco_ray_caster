@@ -94,6 +94,8 @@ exapmle:
 **draw_hip_point:real(6),“1 0.02 1 0 0 0.5”**     
 &emsp;绘制射线命中点 ratio point_size r g b a
 
+**draw_normal:real(6),“1 0.02 1 1 0 0.5”**     
+&emsp;绘制射线命中点法线 ratio width r g b a
 
 exapmle:
 ```XML
@@ -101,6 +103,7 @@ exapmle:
 <config key="draw_deep_ray_ids" value="1 10 1 0 0 0.5 1 2 3 4 5 30" />
 <config key="draw_deep" value="1 5 0 1 0" />
 <config key="draw_hip_point" value="1 0.02" />
+<config key="draw_normal" value="1 5 " />
 ```
 
 ### Noise
@@ -141,6 +144,16 @@ noise2是根据近似的射线入射角度进行判断的噪声，在noise1的�
 **num_thread:real(1),“0**     
 &emsp;增加n个线程计算ray，提高性能，使用该参数时如果线程比较多需要每次重启程序
 
+**lossangle:real(1),“0**     
+&emsp;从命中点到相机向量与法线向量差角度，大于这个角度射线丢失，单位度，范围(0,180)         
+&emsp;注意该功能需要mujoco>=3.4.1
+如下：左图为启用lossangle，右图为普通相机，演示见[ray_caster3.xml](./model/ray_caster3.xml)
+<div align="center">
+<img src="./image/lossangle1.png" width=400/>
+<img src="./image/lossangle2.png" width=400/>
+</div>
+
+
 ## RayCaster
 **resolution:real(1),“0”**     
 &emsp;分辨率
@@ -168,7 +181,16 @@ noise2是根据近似的射线入射角度进行判断的噪声，在noise1的�
 &emsp;h_ray_num,v_ray_num
 
 **baseline:real(1),“0”**     
-&emsp;如果是双目深度相机则需要设置baseline，即两个相机之间的距离
+&emsp;如果是双目深度相机则需要设置baseline，即两个相机之间的距离,可以还原出现实双目深度相机检测时的重影及边缘阴影现象
+<div align="center">
+<img src="./image/baseline_real.png" width=300/>
+<img src="./image/baseline1.png" width=300/>
+<img src="./image/baseline2.png" width=300/>
+</div>
+
+**lossangle:real(1),“0**     
+&emsp;在原有的lossangle基础上针对双目深度相机拓展
+ldm反射到stereo_camera的光路法线和物体表面法线相差角度
 
 
 ## RayCasterLidar

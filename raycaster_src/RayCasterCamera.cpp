@@ -1,4 +1,6 @@
 #include "RayCasterCamera.h"
+#include "engine/engine_util_blas.h"
+#include "mujoco/mjtnum.h"
 #include <cmath>
 #include <iostream>
 #include <mujoco/mujoco.h>
@@ -29,7 +31,7 @@ void RayCasterCamera::init(const RayCasterCameraCfg &cfg) {
     is_compute_hit = true;
   // 调用基类的 protected 初始化函数
   _init(cfg.m, cfg.d, cfg.cam_name, cfg.h_ray_num, cfg.v_ray_num, cfg.dis_range,
-        cfg.is_detect_parentbody);
+        cfg.is_detect_parentbody,cfg.loss_angle);
 #if mjVERSION_HEADER >= 341
   left_ray_normal = new mjtNum[h_ray_num * v_ray_num * 3];
   right_ray_normal = new mjtNum[h_ray_num * v_ray_num * 3];
@@ -63,48 +65,67 @@ void RayCasterCamera::set_num_thread(int n) {
   for (const auto &t : ray_task_datas) {
     StereoTaskData data;
     data.instance = this;
-    data.is_left = true;
     data.start = t.start;
     data.end = t.end;
-    stereo_task_datas.push_back(data);
-    data.is_left = false;
     stereo_task_datas.push_back(data);
   }
 }
 
-void RayCasterCamera::compute_stereo_ray(bool is_left, int start, int end) {
+void RayCasterCamera::compute_stereo_ray(int start, int end) {
   int geomid[1];
-  mjtNum stereo_ray[3];
-  mjtNum pnt[3];
-  if (is_left) {
-    pnt[0] = left_pos_w[0];
-    pnt[1] = left_pos_w[1];
-    pnt[2] = left_pos_w[2];
-  } else {
-    pnt[0] = right_pos_w[0];
-    pnt[1] = right_pos_w[1];
-    pnt[2] = right_pos_w[2];
-  }
+  mjtNum left_stereo_ray[3];
+  mjtNum right_stereo_ray[3];
   for (int idx = start; idx < end; idx++) {
     if (std::isnan(pos_w[idx * 3]) || geomids[idx] == -1 || dist[idx] == 0) {
       continue;
     }
-    mju_sub3(stereo_ray, pos_w + idx * 3, pnt);
+    const mjtNum *target = pos_w + idx * 3;
+    mju_sub3(left_stereo_ray, target, left_pos_w);
+    mju_sub3(right_stereo_ray, target, right_pos_w);
 
 #if mjVERSION_HEADER >= 341
-    mjtNum ratio = 0.0;
-    if (is_left)
-      ratio = mj_ray(m, d, pnt, stereo_ray, geomgroup, 1, no_detect_body_id,
-                     geomid, left_ray_normal + idx * 3);
-    else
-      ratio = mj_ray(m, d, pnt, stereo_ray, geomgroup, 1, no_detect_body_id,
-                     geomid, right_ray_normal + idx * 3);
+    mjtNum left_ratio =
+        mj_ray(m, d, left_pos_w, left_stereo_ray, geomgroup, 1,
+               no_detect_body_id, geomid, left_ray_normal + idx * 3);
+    mjtNum right_ratio =
+        mj_ray(m, d, right_pos_w, right_stereo_ray, geomgroup, 1,
+               no_detect_body_id, geomid, right_ray_normal + idx * 3);
+    if (is_loss_angle) {
+      mjtNum ldm_ray_normal[3] = {ray_normal[idx * 3],
+                                  ray_normal[idx * 3 + 1],
+                                  ray_normal[idx * 3 + 2]};
+      mju_normalize3(ldm_ray_normal); // 确保物体表面法线是单位向量
+      // (表面 -> LDM)
+      const mjtNum *ldm_ray_ptr = ray_vec + idx * 3;
+      mjtNum L[3] = {-ldm_ray_ptr[0], -ldm_ray_ptr[1], -ldm_ray_ptr[2]};
+      mju_normalize3(L);
+      // (表面 -> 相机)
+      mjtNum V_left[3] = {-left_stereo_ray[0], -left_stereo_ray[1],
+                          -left_stereo_ray[2]};
+      mju_normalize3(V_left);
+      mjtNum V_right[3] = {-right_stereo_ray[0], -right_stereo_ray[1],
+                           -right_stereo_ray[2]};
+      mju_normalize3(V_right);
+      mjtNum cos_cam_left = mju_dot3(ldm_ray_normal, V_left);
+      mjtNum cos_cam_right = mju_dot3(ldm_ray_normal, V_right);
+      mjtNum cos_light = mju_dot3(ldm_ray_normal, L);
+      if (cos_cam_left < loss_angle_cos ||
+          cos_cam_right < loss_angle_cos ||
+          cos_light < loss_angle_cos) {
+        pos_w[idx * 3] = pos_w[idx * 3 + 1] = pos_w[idx * 3 + 2] = NAN;
+        dist[idx] = 0;
+        dist_ratio[idx] = 0;
+        continue;
+      }
+    }
 #else
-    mjtNum ratio =
-        mj_ray(m, d, pnt, stereo_ray, geomgroup, 1, no_detect_body_id, geomid);
+    mjtNum left_ratio = mj_ray(m, d, left_pos_w, left_stereo_ray, geomgroup, 1,
+                               no_detect_body_id, geomid);
+    mjtNum right_ratio = mj_ray(m, d, right_pos_w, right_stereo_ray, geomgroup,
+                                1, no_detect_body_id, geomid);
 #endif
-    bool is_valid = (geomid[0] != -1) && (geomid[0] == geomids[idx]) &&
-                    (ratio >= 0.9999 && ratio <= 1.0001);
+    bool is_valid = (left_ratio >= 0.9999 && left_ratio <= 1.0001) &&
+                    (right_ratio >= 0.9999 && right_ratio <= 1.0001);
     if (!is_valid) {
       pos_w[idx * 3] = pos_w[idx * 3 + 1] = pos_w[idx * 3 + 2] = NAN;
       dist[idx] = 0;
@@ -136,13 +157,11 @@ void RayCasterCamera::compute_distance() {
       mju_threadPoolEnqueue(pool, &tasks[i]);
     }
     int first_start = stereo_task_datas[0].start;
-    compute_stereo_ray(true, 0, first_start);
-    compute_stereo_ray(false, 0, first_start);
+    compute_stereo_ray(0, first_start);
     for (int i = 0; i < num_thread; i++) {
       mju_taskJoin(&tasks[i]);
     }
   } else {
-    compute_stereo_ray(true, 0, nray);
-    compute_stereo_ray(false, 0, nray);
+    compute_stereo_ray(0, nray);
   }
 }

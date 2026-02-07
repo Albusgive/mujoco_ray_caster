@@ -1,8 +1,8 @@
 #pragma once
-#include <sstream>
 #include <array>
 #include <functional>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -137,16 +137,35 @@ public:
       this->width = 0.02;
     }
   };
+  class DrawNormal : public Default {
+  public:
+    DrawNormal() {
+      name = "DrawNormal";
+      this->color[0] = 1.0;
+      this->color[1] = 1.0;
+      this->color[2] = 0.0;
+      this->color[3] = 0.5;
+      this->width = 0.02;
+    }
+  };
 
   DrawDeepRay deep_ray;
   DrawDeepRayIds deep_ray_ids;
   DrawDeep deep;
   DrawHipPoint hip_point;
+  DrawNormal normal;
 };
 
-enum class DataType { data, image, normal, 
-  distance_to_image_plane,image_plane_image,image_plane_normal,
-   pos_w, pos_b };
+enum class DataType {
+  data,
+  image,
+  normal,
+  distance_to_image_plane,
+  image_plane_image,
+  image_plane_normal,
+  pos_w,
+  pos_b
+};
 
 class SensorData {
 public:
@@ -227,11 +246,12 @@ public:
   int n_step = 0;
   std::string name;
   std::chrono::high_resolution_clock::time_point start;
-  static constexpr std::array<const char *, 12> base_attributes = {
-      "draw_deep_ray",  "draw_deep_ray_ids", "draw_deep",
-      "draw_hip_point", "sensor_data_types", "noise_type",
-      "noise_cfg",      "geomgroup",         "detect_parentbody",
-      "compute_time_log",   "n_step_update",     "num_thread"};
+  static constexpr std::array<const char *, 14> base_attributes = {
+      "draw_deep_ray",    "draw_deep_ray_ids", "draw_deep",
+      "draw_hip_point",   "sensor_data_types", "noise_type",
+      "noise_cfg",        "geomgroup",         "detect_parentbody",
+      "compute_time_log", "n_step_update",     "num_thread",
+      "lossangle",        "draw_normal"};
   std::vector<std::pair<std::string_view, int>> noise_attributes = {
       {"uniform", 3}, {"gaussian", 3}, {"noise1", 4}, {"noise2", 8}};
 };

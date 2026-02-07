@@ -200,18 +200,4 @@ public:
   };
 };
 
-class RayNoise4 : public std_noise::Noise {
-  // only stereo camera TODO
-public:
-  RayNoise4() {
-
-  };
-  mjtNum *ray_vec;
-  mjtNum *ray_normal;
-  mjtNum *left_ray_normal;
-  mjtNum *right_ray_normal;
-  bool *is_lost;
-  int nray = 0;
-  void produce_united_noise() {};
-};
 } // namespace ray_noise

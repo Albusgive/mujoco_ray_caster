@@ -157,6 +157,8 @@ void RayPlugin::getBaseCfg(const mjModel *m, mjData *d, int instance) {
 
   set_vis_default(vis_cfg.hip_point, base_attributes[3]);
 
+  set_vis_default(vis_cfg.normal, base_attributes[13]);
+
   // cfg.deep_ray.print();
   // cfg.deep_ray_ids.print();
   // cfg.deep.print();
@@ -367,6 +369,13 @@ void RayPlugin::initSensor(const mjModel *m, mjData *d, int instance,
   if (!num_thread.empty()) {
     ray_caster->set_num_thread(num_thread[0]);
   }
+
+  /* lossangle */
+  auto lossangle =
+      ReadVector<int>(mj_getPluginConfig(m, instance, base_attributes[12]));
+  if (!lossangle.empty()) {
+    ray_caster->set_lossangle(lossangle[0]);
+  }
 }
 
 void RayPlugin::Visualize(const mjModel *m, mjData *d, const mjvOption *opt,
@@ -393,6 +402,10 @@ void RayPlugin::Visualize(const mjModel *m, mjData *d, const mjvOption *opt,
                                vis_cfg.hip_point.width,
                                vis_cfg.hip_point.color);
 
+  if (vis_cfg.normal.is_draw)
+    ray_caster->draw_normal(scn, vis_cfg.normal.ratio,
+                               vis_cfg.normal.width,
+                               vis_cfg.normal.color);
   mj_freeStack(d);
 }
 

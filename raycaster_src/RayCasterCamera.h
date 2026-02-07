@@ -17,6 +17,7 @@ public:
   std::array<mjtNum, 2> dis_range = {0.0, 100.0};
   bool is_detect_parentbody = false;
   mjtNum baseline = 0.0; // 基线距离 (cm)
+  mjtNum loss_angle=0.0;
 };
 
 class RayCasterCamera : public RayCaster {
@@ -35,9 +36,11 @@ private:
   mjtNum v_pixel_size = 0.0;            // 像素垂直尺寸 (cm)
   mjtNum baseline = 0.0;                // 基线距离 (cm)
   mjtNum left_pos_w[3], right_pos_w[3]; // Stereo相机位置
+
 #if mjVERSION_HEADER >= 341
   mjtNum *left_ray_normal = nullptr;
   mjtNum *right_ray_normal = nullptr;
+  void compute_loss_ray(int idx) override {}
 #endif
 
   // 计算射线向量
@@ -48,20 +51,16 @@ private:
     RayCasterCamera *instance; // 指向你的类实例
     int start;
     int end;
-    bool is_left;
   };
   std::vector<StereoTaskData> stereo_task_datas;
   static void *stereo_task_func(void *user_data) {
     StereoTaskData *data = static_cast<StereoTaskData *>(user_data);
-    data->instance->compute_stereo_ray(data->is_left, data->start, data->end);
+    data->instance->compute_stereo_ray(data->start, data->end);
     return nullptr;
   }
 
 public:
   void set_num_thread(int n) override;
-  void compute_stereo_ray(bool is_left, int start, int end);
+  void compute_stereo_ray(int start, int end);
   void compute_distance() override;
-  #if mjVERSION_HEADER >= 341
-  void setNoise(ray_noise::RayNoise4 noise) override{}; //TODO
-  #endif
 };

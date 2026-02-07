@@ -3,30 +3,28 @@
 
 RayCasterLidar::RayCasterLidar() {}
 
-RayCasterLidar::RayCasterLidar(const RayCasterLidarCfg &cfg) {
-  init(cfg);
-}
+RayCasterLidar::RayCasterLidar(const RayCasterLidarCfg &cfg) { init(cfg); }
 
-RayCasterLidar::~RayCasterLidar() {
-}
+RayCasterLidar::~RayCasterLidar() {}
 
 void RayCasterLidar::init(const RayCasterLidarCfg &cfg) {
   this->fov_h = cfg.fov_h;
   this->fov_v = cfg.fov_v;
-  
+
   // 防止除0
   if (cfg.h_ray_num > 1)
-      this->h_res = this->fov_h / (cfg.h_ray_num - 1);
-  else 
-      this->h_res = 0;
+    this->h_res = this->fov_h / (cfg.h_ray_num - 1);
+  else
+    this->h_res = 0;
 
   if (cfg.v_ray_num > 1)
-      this->v_res = this->fov_v / (cfg.v_ray_num - 1);
-  else 
-      this->v_res = 0;
+    this->v_res = this->fov_v / (cfg.v_ray_num - 1);
+  else
+    this->v_res = 0;
 
   // 调用基类初始化
-  _init(cfg.m, cfg.d, cfg.cam_name, cfg.h_ray_num, cfg.v_ray_num, cfg.dis_range, cfg.is_detect_self);
+  _init(cfg.m, cfg.d, cfg.cam_name, cfg.h_ray_num, cfg.v_ray_num, cfg.dis_range,
+        cfg.is_detect_self, cfg.loss_angle);
 }
 
 void RayCasterLidar::create_rays() {

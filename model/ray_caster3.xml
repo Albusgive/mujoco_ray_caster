@@ -19,15 +19,21 @@
   <worldbody>
 
 
-    <body pos="0 0 0.2">
-      <!-- <freejoint /> -->
-      <geom type="box" size="0.01 0.05 0.005" rgba="0 1 1 1" />
+    <!-- <body pos="-1.5 1 0.4" euler="-45 10 0" mocap="true">
+      <geom type="box" size="0.08 0.2 0.1" rgba="0 1 1 0.2" />
       <camera name="RayCasterCamera" ipd="0.095" focal="1 1"
         sensorsize="2.0 1.1547005"
-        resolution="640 370" xyaxes="0 -1 0 0 0 1" />
+        resolution="4 4" xyaxes="0 -1 0 0 0 1" />
+    </body> -->
+
+    <body pos="0 0 0.2" mocap="true">
+      <geom type="box" size="0.08 0.2 0.1" rgba="0 1 1 0.2" />
+      <camera name="RayCasterCamera" ipd="0.095" focal="1 1"
+        sensorsize="2.0 1.1547005"
+        resolution="4 4" xyaxes="0 -1 0 0 0 1" />
     </body>
 
-    <geom type="box" pos="0.6 0 0" size="0.001 2 1" />
+    <geom type="box" pos="0.7 0 0" size="0.1 2 1" />
     <body mocap="true">
       <geom type="box" pos="0.2 0 0" size="0.01 0.01 1" rgba="0 0 1 1" />
     </body>
@@ -41,8 +47,8 @@
       <config key="focal_length" value="1" />
       <config key="horizontal_aperture" value="2" />
       <config key="vertical_aperture" value="1.154700538" />
-      <config key="size" value="64 36" />
-      <config key="dis_range" value="0.01 6" />
+      <config key="size" value="64 32" />
+      <config key="dis_range" value="0.01 10" />
 
       <!-- <config key="compute_time_log" value="1" /> -->
 
@@ -51,11 +57,14 @@
       <config key="draw_deep" value="2 5 0 1 0" /> -->
       <config key="draw_hip_point" value="1 0.02" />
 
-      <config key="sensor_data_types" value="image_plane_image" />
+      <!-- <config key="draw_normal" value="1 5 " /> -->
+
+      <config key="sensor_data_types" value="image_plane_image data" />
       <!-- <config key="noise_type" value="noise2" /> -->
       <!-- <config key="noise_cfg" value="-0.01 0.01 0.05 150 170 0.2 0.4" /> -->
       <config key="baseline" value="0.095" />
       <config key="num_thread" value="4" />
+      <!-- <config key="lossangle" value="75" /> -->
     </plugin>
 
 
